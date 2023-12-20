@@ -10,7 +10,7 @@
 #define INC_BD34301_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "stm32f1xx_hal.h"
 /* Exported types ------------------------------------------------------------*/
 
 typedef struct _BD34301_Mode{
@@ -40,16 +40,14 @@ typedef struct _BD34301_Mode{
 #define BD34_ANALOG_POWER       0x03
 #define BD34_TIMEOUT            100
 
-
 /* Exported variables ------------------------------------------------------- */
 extern BD34301_Mode_t BD34301_ModeList[];
-
-
 
 /* Exported functions ------------------------------------------------------- */
 HAL_StatusTypeDef BD34301_RegWrite(uint8_t address, uint8_t data);
 
 uint8_t BD34301_Init(I2C_HandleTypeDef *i2c, uint8_t address);
+void BD34301_Reset(void);
 void BD34301_ModeSwitching(BD34301_Mode_t *mode);
 void BD34301_PrintMode(char *buffer, BD34301_Mode_t *mode);
 void BD34301_RamClear(void);

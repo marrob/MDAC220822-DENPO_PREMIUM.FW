@@ -10,7 +10,7 @@
 #define INC_PCM9211_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
-#include "main.h"
+#include "stm32f1xx_hal.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -20,6 +20,7 @@
 #define PCM9211_RXIN1   0x01
 #define PCM9211_RXIN2   0x02
 #define PCM9211_RXIN3   0x03
+#define PCM9211_RXIN4   0x04
 
 typedef enum _PCM9211_Frequencies_t
 {
@@ -42,6 +43,7 @@ typedef enum _PCM9211_Frequencies_t
 }PCM9211_Frequencies_t;
 
 /* Exported functions ------------------------------------------------------- */
+
 uint8_t PCM9211_Init(I2C_HandleTypeDef *i2c, uint8_t address);
 void PCM9211_SelectSource(uint8_t source);
 uint32_t PCM9211_DataInfromation();

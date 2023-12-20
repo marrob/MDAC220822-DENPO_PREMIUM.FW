@@ -11,9 +11,8 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-
 #include "pcm9211.h"
-
+#include "main.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -30,7 +29,7 @@ static uint32_t _errorCounter;
 
 /* Private function prototypes -----------------------------------------------*/
 static uint8_t Read(uint8_t reg);
-static uint32_t ReadU32(uint8_t reg);
+//static uint32_t ReadU32(uint8_t reg);
 static uint8_t Write(uint8_t reg, uint8_t value);
 
 /* Private user code ---------------------------------------------------------*/
@@ -137,6 +136,7 @@ static uint8_t Read(uint8_t reg)
   return value;
 }
 
+#if end
 static uint32_t ReadU32(uint8_t reg)
 {
   uint32_t value = 0;
@@ -147,6 +147,7 @@ static uint32_t ReadU32(uint8_t reg)
   value = *((uint32_t*)temp);
   return value;
 }
+#endif
 
 static uint8_t Write(uint8_t reg, uint8_t value)
 {
@@ -157,10 +158,10 @@ static uint8_t Write(uint8_t reg, uint8_t value)
 
 void PCM9211_Reset(void)
 {
-  HAL_GPIO_WritePin(RESET_SPDIF_GPIO_Port, RESET_SPDIF_Pin, GPIO_PIN_SET); // igy van resetben
+  HAL_GPIO_WritePin(RESET_SPD_ISO_GPIO_Port, RESET_SPD_ISO_Pin, GPIO_PIN_SET); // H-> RESET
   HAL_Delay(100);
-  HAL_GPIO_WritePin(RESET_SPDIF_GPIO_Port, RESET_SPDIF_Pin, GPIO_PIN_RESET); // reset vége
-  HAL_Delay(100);
+  HAL_GPIO_WritePin(RESET_SPD_ISO_GPIO_Port, RESET_SPD_ISO_Pin, GPIO_PIN_RESET);
+
 }
 
 /************************ (C) COPYRIGHT KonvolucioBt ***********END OF FILE****/

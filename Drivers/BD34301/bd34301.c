@@ -191,6 +191,12 @@ HAL_StatusTypeDef BD34301_RegWrite(uint8_t address, uint8_t data)
   return status;
 }
 
-
+void BD34301_Reset(void)
+{
+  HAL_GPIO_WritePin(DAC_RESETB_GPIO_Port, DAC_RESETB_Pin, GPIO_PIN_RESET);
+  HAL_Delay(10);
+  HAL_GPIO_WritePin(DAC_RESETB_GPIO_Port, DAC_RESETB_Pin, GPIO_PIN_SET);
+  HAL_Delay(10);
+}
 
 /************************ (C) COPYRIGHT KonvolucioBt ***********END OF FILE****/
