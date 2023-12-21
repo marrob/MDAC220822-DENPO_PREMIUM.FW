@@ -240,11 +240,20 @@ int main(void)
   Device.XmosStatus.Pre = XMOS_UNKNOWN;
   Device.Volume.Curr = 100;
 
+  HAL_GPIO_WritePin(EN_I2S_ISO_GPIO_Port, EN_I2S_ISO_Pin, GPIO_PIN_SET); //ON -> Deselect I2S-HDMI        //BCLK ->R529, EN_I2S_IS ->R583
+  HAL_GPIO_WritePin(EN_USB_ISO_GPIO_Port, EN_USB_ISO_Pin, GPIO_PIN_SET); // ON -> Select USB Input        //BCLK ->R521, EN_USB_ISO ->R579
+  HAL_GPIO_WritePin(EN_SPDIF_ISO_GPIO_Port, EN_SPDIF_ISO_Pin, GPIO_PIN_RESET); // OFF -> Deselect SPDIF   //BCLK ->R531, EN_SPDIF_ISO ->R591
+
+
+  /* --- Minden ki ---*/
   HAL_GPIO_WritePin(EN_I2S_ISO_GPIO_Port, EN_I2S_ISO_Pin, GPIO_PIN_SET); //ON -> Deselect I2S-HDMI
-  HAL_GPIO_WritePin(EN_USB_ISO_GPIO_Port, EN_USB_ISO_Pin, GPIO_PIN_SET); // ON -> Select USB Input
+  HAL_GPIO_WritePin(EN_USB_ISO_GPIO_Port, EN_USB_ISO_Pin, GPIO_PIN_RESET); // OFF -> Deselect USB Input
   HAL_GPIO_WritePin(EN_SPDIF_ISO_GPIO_Port, EN_SPDIF_ISO_Pin, GPIO_PIN_RESET); // OFF -> Deselect SPDIF
 
 #endif
+
+
+
 
   /*--- User Leds ---*/
   UsrLeds_Init(&hspi1);
@@ -310,11 +319,14 @@ int main(void)
     static uint8_t flag;
     static uint32_t timestamp;
 
+
+
     Device.AudioType.Curr = GetAudioType();
     if( Device.Route.Curr == ROUTE_I2S_HDMI ||
         Device.Route.Curr == ROUTE_BNC ||
         Device.Route.Curr == ROUTE_RCA ||
-        Device.Route.Curr == ROUTE_AES_XLR)
+        Device.Route.Curr == ROUTE_AES_XLR ||
+        Device.Route.Curr == ROUTE_TOS)
     {
       if(Device.AudioType.Pre != Device.AudioType.Curr)
       {
@@ -332,6 +344,14 @@ int main(void)
           if(HAL_GetTick() - timestamp > 500)
           {
             flag = 0;
+
+            BD34301_LefRightSwapOff();
+            if(Device.Route.Curr == ROUTE_I2S_HDMI)
+            {
+              printf("LR Swap ON\r\n");
+              BD34301_LefRightSwapOn();
+            }
+
             switch(Device.AudioType.Curr)
             {
                case AUDIO_PCM_32_0KHZ:{
@@ -441,8 +461,10 @@ int main(void)
        */
       if(Device.Route.Pre != ROUTE_USB)
       {
-        BD34301_MuteOn();
+     //   BD34301_MuteOn();
       }
+
+      BD34301_LefRightSwapOff();
 
       if(Device.XmosStatus.Pre != Device.XmosStatus.Curr)
       {
@@ -527,7 +549,6 @@ int main(void)
     }
 
     /*
-     *
      * Ezt látszólag mindig használja az XMOS szám váltáskor.
      *
      * de DSD->PCM váltáskor a sistergést nem nyomja el.
@@ -1256,6 +1277,11 @@ void DevicePowerOn(void)
 
   /*--- Bekapcsolom a Rout-hoz tartozó LED-et-- */
   UpdateSelectorLeds(Device.Route.Curr);
+  SetRoute (Device.Route.Curr);
+
+
+  Device.XmosStatus.Pre = XMOS_UNKNOWN;
+  Device.Volume.Curr = 100;
 
   DeviceWake();
 
@@ -1266,8 +1292,11 @@ void DevicePowerOff(void)
 {
   Device.IsOn = 0;
 
-  /* --- Analóg táp bekapcsolása --- */
+  /* --- Analóg táp kikapcsolása --- */
   HAL_GPIO_WritePin(PWR_CTRL_GPIO_Port, PWR_CTRL_Pin, GPIO_PIN_SET);
+
+  /*--- Minden LED-et kikapcsolok ---*/
+  UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF);
 
   /*--- Minden LED-et kikapcsolok ---*/
   UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF);

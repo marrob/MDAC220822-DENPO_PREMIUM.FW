@@ -113,6 +113,15 @@ void BD34301_PowerOnSequence(void)
 
 }
 
+void BD34301_LefRightSwapOn(void)
+{
+  BD34301_RegWrite(0x13, 0x01);
+}
+
+void BD34301_LefRightSwapOff(void)
+{
+  BD34301_RegWrite(0x13, 0x00);
+}
 void BD34301_RamClear(void)
 {
   BD34301_RegWrite(0x2F, 0x80);
@@ -154,7 +163,7 @@ void BD34301_ModeSwitching(BD34301_Mode_t *mode)
   BD34301_RegWrite(0x04, mode->Clock1);
   BD34301_RegWrite(0x06, mode->Clock2);
   BD34301_RegWrite(0x10, mode->AudioIf1);
-  BD34301_RegWrite(0x13, mode->AudioIf3);
+//  BD34301_RegWrite(0x13, mode->AudioIf3);
   BD34301_RegWrite(0x16, mode->DsdFilter);
   BD34301_RegWrite(0x30, mode->FirFilter1);
   BD34301_RegWrite(0x31, mode->FirFilter2);

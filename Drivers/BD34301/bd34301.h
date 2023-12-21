@@ -57,6 +57,8 @@ void BD34301_DigitalPowerOn(void);
 void BD34301_DigitalPowerOff(void);
 void BD34301_MuteOn(void);
 void BD34301_MuteOff(void);
+void BD34301_LefRightSwapOff(void);
+void BD34301_LefRightSwapOn(void);
 
 #endif /* INC_BD34301_H_ */
 
