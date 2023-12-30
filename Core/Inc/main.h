@@ -171,6 +171,9 @@ typedef struct _AppTypeDef
     uint8_t Curr;
   }Lock;
 
+
+  uint8_t UserIsMute;
+
   DacAudioFormat_t DacAudioFormat;
 
   uint32_t UpTimeSec;

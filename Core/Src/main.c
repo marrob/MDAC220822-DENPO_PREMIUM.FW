@@ -32,8 +32,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include "ir_nec_rx.h"
 #include "LiveLed.h"
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +59,6 @@
 
 #define FreqMeterBclkCoutnerStart()    __HAL_TIM_ENABLE(&htim1)
 #define FreqMeterBclkCounterValue     FRMETER_TIM_BCLK_COUNTER->CNT
-
 
 /*** DIO ***/
 #define DO_EN_I2S_I2C_ISO         ((uint8_t)1<<1)
@@ -146,7 +145,6 @@ void FreqMeasSourceLRCK(void);
 AudioTypes_t GetAudioType();
 void SetMasterClock(MasterClocks_t clk);
 
-
 /*** XMOS/USB ***/
 XmosStatus_t ReadXmosStaus(void);
 uint8_t XmosIsMute(void);
@@ -154,9 +152,14 @@ void SetRoute (Route_t route);
 
 /*** Tasks ***/
 void UpTimeTask(void);
+void DebugTask(DebugState_t dbg);
+
+/*** Mute ***/
+void UserMuteOn(void);
+void UserMuteOff(void);
+uint8_t UserIsMute(void);
 void DeviceMuteOff(void);
 void DeviceMuteOn(void);
-void DebugTask(DebugState_t dbg);
 
 /*** HMI ***/
 uint8_t ButtonsPoll(void);
@@ -252,9 +255,6 @@ int main(void)
 
 #endif
 
-
-
-
   /*--- User Leds ---*/
   UsrLeds_Init(&hspi1);
 
@@ -288,6 +288,8 @@ int main(void)
   /*--- Communication ---*/
   Com_Init(&huart1, &hdma_usart1_rx);
 
+  /*--- Infrared Receiver ---*/
+  IR_NEC_Init(&htim4, TIM_CHANNEL_4);
 
   printf("Hello World\r\n");
 
@@ -332,10 +334,10 @@ int main(void)
       {
         if(flag == 0)
         {
+          flag = 1;
           DeviceMuteOn();
           BD34301_MuteOn();
           Device.Diag.SpdifAuidoTypeChangedCnt++;
-          flag = 1;
           timestamp = HAL_GetTick();
           Device.AudioType.Pre = AUDIO_UNKNOWN; //ez kikényszerití a némítás-visszakapcsolást, abban az esetben is ha pattanás/rövid hiba törétn a stream-ben
         }
@@ -345,10 +347,11 @@ int main(void)
           {
             flag = 0;
 
+            /*--- LR Swap ---*/
             BD34301_LefRightSwapOff();
             if(Device.Route.Curr == ROUTE_I2S_HDMI)
             {
-              printf("LR Swap ON\r\n");
+              //printf("LR Swap ON\r\n");
               BD34301_LefRightSwapOn();
             }
 
@@ -455,96 +458,103 @@ int main(void)
     Device.XmosStatus.Curr = ReadXmosStaus();
     if(Device.Route.Curr == ROUTE_USB)
     {
-      /*
-       * Taktikai DAC némitás, az új DacAudioFormat visszakpcsolja
-       * Ha az USB-n jön digitális jel, ott már nem tudok ilyen gyorsan némitani
-       */
-      if(Device.Route.Pre != ROUTE_USB)
-      {
-     //   BD34301_MuteOn();
-      }
-
       BD34301_LefRightSwapOff();
-
       if(Device.XmosStatus.Pre != Device.XmosStatus.Curr)
       {
-        Device.Diag.XmosStatusChangedCnt++;
-        switch(Device.XmosStatus.Curr)
+        if(flag == 0)
         {
-          case XMOS_PCM_44_1KHZ:{
-              Device.DacAudioFormat = DAC_PCM_44_1KHZ;
-              Device.MasterClock = CLK_22_5792MHZ;
-              break;
-            }
-          case XMOS_PCM_48_0KHZ:{
-            Device.DacAudioFormat = DAC_PCM_48_0KHZ;
-            Device.MasterClock = CLK_24_575MHZ;
-            break;
-          }
-          case XMOS_PCM_88_2KHZ:{
-            Device.DacAudioFormat = DAC_PCM_88_2KHZ;
-            Device.MasterClock = CLK_22_5792MHZ;
-            break;
-          }
-          case XMOS_PCM_96_0KHZ:{
-            Device.DacAudioFormat = DAC_PCM_96_0KHZ;
-            Device.MasterClock = CLK_24_575MHZ;
-            break;
-          }
-          case XMOS_PCM_176_4KHZ:{
-            Device.DacAudioFormat = DAC_PCM_176_4KHZ;
-            Device.MasterClock = CLK_22_5792MHZ;
-            break;
-          }
-          case XMOS_PCM_192_KHZ:{
-            Device.DacAudioFormat = DAC_PCM_192_KHZ;
-            Device.MasterClock = CLK_24_575MHZ;
-            break;
-          }
-          case XMOS_PCM_352_8KHZ:{
-            Device.DacAudioFormat = DAC_PCM_352_8KHZ;
-            Device.MasterClock = CLK_22_5792MHZ;
-            break;
-          }
-          case XMOS_PCM_384_KHZ:{
-            Device.DacAudioFormat = DAC_PCM_384_0KHZ;
-            Device.MasterClock = CLK_24_575MHZ;
-            break;
-          }
-          case XMOS_DSD_64:{
-            Device.DacAudioFormat = DAC_DSD_64;
-            Device.MasterClock = CLK_22_5792MHZ;
-            break;
-          }
-          case XMOS_DSD_128:{
-            Device.DacAudioFormat = DAC_DSD_128;
-            Device.MasterClock = CLK_22_5792MHZ;
-            break;
-          }
-          case XMOS_DSD_256:{
-            Device.DacAudioFormat = DAC_DSD_256;
-            Device.MasterClock = CLK_22_5792MHZ;
-            break;
-          }
-          default:
-          {
-            Device.Diag.XmosFormatUnknownCnt++;
-          };
+          flag = 1;
+          DeviceMuteOn();
+          BD34301_MuteOn();
+          Device.Diag.XmosStatusChangedCnt++;
+          timestamp = HAL_GetTick();
+          Device.AudioType.Pre = XMOS_UNKNOWN; //ez kikényszerití a némítás-visszakapcsolást, abban az esetben is ha pattanás/rövid hiba törétn a stream-ben
         }
 
-        BD34301_DigitalPowerOff();
-        BD34301_SoftwareResetOn();
+        if(flag == 1)
+        {
+          if(HAL_GetTick() - timestamp > 500)
+          {
+            flag = 0;
+            switch(Device.XmosStatus.Curr)
+            {
+              case XMOS_PCM_44_1KHZ:{
+                  Device.DacAudioFormat = DAC_PCM_44_1KHZ;
+                  Device.MasterClock = CLK_22_5792MHZ;
+                  break;
+                }
+              case XMOS_PCM_48_0KHZ:{
+                Device.DacAudioFormat = DAC_PCM_48_0KHZ;
+                Device.MasterClock = CLK_24_575MHZ;
+                break;
+              }
+              case XMOS_PCM_88_2KHZ:{
+                Device.DacAudioFormat = DAC_PCM_88_2KHZ;
+                Device.MasterClock = CLK_22_5792MHZ;
+                break;
+              }
+              case XMOS_PCM_96_0KHZ:{
+                Device.DacAudioFormat = DAC_PCM_96_0KHZ;
+                Device.MasterClock = CLK_24_575MHZ;
+                break;
+              }
+              case XMOS_PCM_176_4KHZ:{
+                Device.DacAudioFormat = DAC_PCM_176_4KHZ;
+                Device.MasterClock = CLK_22_5792MHZ;
+                break;
+              }
+              case XMOS_PCM_192_KHZ:{
+                Device.DacAudioFormat = DAC_PCM_192_KHZ;
+                Device.MasterClock = CLK_24_575MHZ;
+                break;
+              }
+              case XMOS_PCM_352_8KHZ:{
+                Device.DacAudioFormat = DAC_PCM_352_8KHZ;
+                Device.MasterClock = CLK_22_5792MHZ;
+                break;
+              }
+              case XMOS_PCM_384_KHZ:{
+                Device.DacAudioFormat = DAC_PCM_384_0KHZ;
+                Device.MasterClock = CLK_24_575MHZ;
+                break;
+              }
+              case XMOS_DSD_64:{
+                Device.DacAudioFormat = DAC_DSD_64;
+                Device.MasterClock = CLK_22_5792MHZ;
+                break;
+              }
+              case XMOS_DSD_128:{
+                Device.DacAudioFormat = DAC_DSD_128;
+                Device.MasterClock = CLK_22_5792MHZ;
+                break;
+              }
+              case XMOS_DSD_256:{
+                Device.DacAudioFormat = DAC_DSD_256;
+                Device.MasterClock = CLK_22_5792MHZ;
+                break;
+              }
+              default:
+              {
+                Device.Diag.XmosFormatUnknownCnt++;
+              };
+            }
 
-        Device.Diag.DacReConfgiurationCnt++;
-        SetMasterClock(Device.MasterClock);
-        DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
-        BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
+            BD34301_DigitalPowerOff();
+            BD34301_SoftwareResetOn();
 
-        BD34301_SoftwareResetOff();
-        BD34301_DigitalPowerOn();
-        BD34301_RamClear(); //Kritkus, nem szól a PCM ha nincs
-        BD34301_MuteOff();
-        Device.XmosStatus.Pre = Device.XmosStatus.Curr;
+            Device.Diag.DacReConfgiurationCnt++;
+            SetMasterClock(Device.MasterClock);
+            DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
+            BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
+
+            BD34301_SoftwareResetOff();
+            BD34301_DigitalPowerOn();
+            BD34301_RamClear(); //Kritkus, nem szól a PCM ha nincs
+            DeviceMuteOff();
+            BD34301_MuteOff();
+            Device.XmosStatus.Pre = Device.XmosStatus.Curr;
+          }
+        }
       }
     }
 
@@ -553,6 +563,8 @@ int main(void)
      *
      * de DSD->PCM váltáskor a sistergést nem nyomja el.
      */
+    /*
+     * Törlésre jelöve, átveszi a hardweres némitas a helyet
     if(Device.Route.Curr == ROUTE_USB)
     {
       static uint8_t preXmosMute;
@@ -567,6 +579,7 @@ int main(void)
         preXmosMute = currXmosMute;
       }
     }
+    */
 
     if(Device.Route.Pre != Device.Route.Curr){
       SetRoute(Device.Route.Curr);
@@ -574,7 +587,6 @@ int main(void)
       Device.XmosStatus.Pre = XMOS_UNKNOWN;
       Device.Route.Pre = Device.Route.Curr;
     }
-
 
     /*
      * A Volume 0..100 között értelmezett
@@ -881,7 +893,7 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 0;
+  htim4.Init.Prescaler = 4799;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim4.Init.Period = 65535;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -896,7 +908,7 @@ static void MX_TIM4_Init(void)
   {
     Error_Handler();
   }
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
   sConfigIC.ICFilter = 0;
@@ -1150,15 +1162,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 
 /* Inputs & Outputs ----------------------------------------------------------*/
-void DeviceMuteOn(void)
-{
-  HAL_GPIO_WritePin(DAC_MUTE_COM_GPIO_Port, DAC_MUTE_COM_Pin, GPIO_PIN_RESET);
-}
-
-void DeviceMuteOff(void)
-{
-  HAL_GPIO_WritePin(DAC_MUTE_COM_GPIO_Port, DAC_MUTE_COM_Pin, GPIO_PIN_SET);
-}
 
 void SetRoute (Route_t route)
 {
@@ -1384,7 +1387,6 @@ uint8_t ButtonsPoll (void)
   return retval;
 }
 
-
 /*
  * Amikor mengyomja a Power nyomógombot, akkor az aktális állpotot invertálja ignorálja a további változást.
  * Szóval a folyamatos nyomvatartás nem kapcsolgatja ki be a készüléket.
@@ -1461,6 +1463,85 @@ void UpdateLockIntExtStatus(void)
           UsrLeds_Off(USR_LED_EXTREF);
       }
     }
+  }
+}
+
+
+/*  Mute---- -----------------------------------------------------------------*/
+void UserMuteOn(void)
+{
+  Device.UserIsMute = 1;
+  DeviceMuteOn();
+}
+
+void UserMuteOff(void)
+{
+  Device.UserIsMute = 0;
+  DeviceMuteOff();
+}
+
+uint8_t UserIsMute(void)
+{
+  return Device.UserIsMute;
+}
+
+/*
+ * Call by hardwre only
+ */
+void DeviceMuteOn(void)
+{
+  HAL_GPIO_WritePin(DAC_MUTE_COM_GPIO_Port, DAC_MUTE_COM_Pin, GPIO_PIN_RESET);
+}
+
+/*
+ * Call by hardwre only
+ */
+void DeviceMuteOff(void)
+{
+  if(!UserIsMute())
+    HAL_GPIO_WritePin(DAC_MUTE_COM_GPIO_Port, DAC_MUTE_COM_Pin, GPIO_PIN_SET);
+}
+
+
+
+/* IR REMOTE -----------------------------------------------------------------*/
+void IR_NEC_Parser (uint8_t address, uint8_t command)
+{
+  printf("IR REMOTE ADDRESS:0x%02X COMMAND:0x%02X\r\n", address, command);
+
+  switch(command)
+  {
+    /*--- Power On/Off ---*/
+    case 0x4D:
+    {
+      if(DeviceIsOn())
+        DevicePowerOff();
+      else
+        DevicePowerOn();
+      break;
+    }
+
+    /*--- Source ---*/
+    case 0x54:
+    {
+      if(DeviceIsSleep())
+        DeviceWake();
+      else
+        DeviceSelectNextRoute();
+      break;
+    }
+
+
+    /*--- Mute ---*/
+    case 0x16:
+    {
+      if(UserIsMute())
+        DeviceMuteOff();
+      else
+        DeviceMuteOn();
+      break;
+    }
+
   }
 }
 
