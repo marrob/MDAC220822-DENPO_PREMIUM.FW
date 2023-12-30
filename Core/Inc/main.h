@@ -174,6 +174,8 @@ typedef struct _AppTypeDef
 
   uint8_t UserIsMute;
 
+  uint8_t RemoteCommand;
+
   DacAudioFormat_t DacAudioFormat;
 
   uint32_t UpTimeSec;
@@ -327,8 +329,8 @@ extern Device_t Device;
 #define BTN_PWR_DB_GPIO_Port GPIOB
 #define BTN_SEL_DB_Pin GPIO_PIN_14
 #define BTN_SEL_DB_GPIO_Port GPIOB
-#define A3_USB_ISO_Pin GPIO_PIN_15
-#define A3_USB_ISO_GPIO_Port GPIOB
+#define RECLKBYPS_Pin GPIO_PIN_15
+#define RECLKBYPS_GPIO_Port GPIOB
 #define A1_USB_ISO_Pin GPIO_PIN_8
 #define A1_USB_ISO_GPIO_Port GPIOA
 #define A2_USB_ISO_Pin GPIO_PIN_11

@@ -173,7 +173,7 @@ uint8_t DeviceIsSleep(void);
 void SleepTask(void);
 uint8_t DeviceIsOn(void);
 void ButtonsTask(void);
-
+void RemoteTask(void);
 
 /* USER CODE END PFP */
 
@@ -320,8 +320,6 @@ int main(void)
 
     static uint8_t flag;
     static uint32_t timestamp;
-
-
 
     Device.AudioType.Curr = GetAudioType();
     if( Device.Route.Curr == ROUTE_I2S_HDMI ||
@@ -604,13 +602,35 @@ int main(void)
       Device.Volume.Pre = Device.Volume.Curr;
     }
 
+    /*
+     * Re-Colck bypass
+     */
+    if(Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
+        Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
+        Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
+        Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
+        Device.DacAudioFormat == DAC_DSD_64  ||
+        Device.DacAudioFormat == DAC_DSD_128  ||
+        Device.DacAudioFormat == DAC_DSD_256  ||
+        Device.DacAudioFormat == DAC_DSD_512
+      )
+    {
+      /*--- BYPASS ACTIVE ---*/
+      HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_SET);
+    }
+    else
+    {
+      /*--- RECLOCK ACTIVE ---*/
+      HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_RESET);
+    }
+
     LiveLedTask(&hLiveLed);
     Com_Task();
     UpTimeTask();
     ButtonsTask();
     UpdateLockIntExtStatus();
     SleepTask();
-
+    RemoteTask();
     DebugTask(Device.DebugState);
 
     /* USER CODE END WHILE */
@@ -717,7 +737,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -1001,7 +1021,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, EN_USB_ISO_Pin|USART1_DIR_Pin|EN_SPDIF_ISO_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, EN_I2S_ISO_Pin|PWR_CTRL_Pin|MCLK_SEL_ISO_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, EN_I2S_ISO_Pin|PWR_CTRL_Pin|RECLKBYPS_Pin|MCLK_SEL_ISO_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(RESET_SPD_ISO_GPIO_Port, RESET_SPD_ISO_Pin, GPIO_PIN_SET);
@@ -1047,15 +1067,15 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : H5_3_ISO_Pin LOCK_PLL_Pin INT_EXT_PLL_Pin BTN_PWR_DB_Pin
-                           BTN_SEL_DB_Pin A3_USB_ISO_Pin MUTE_USB_ISO_Pin DSD_PCM_USB_ISO_Pin */
+                           BTN_SEL_DB_Pin MUTE_USB_ISO_Pin DSD_PCM_USB_ISO_Pin */
   GPIO_InitStruct.Pin = H5_3_ISO_Pin|LOCK_PLL_Pin|INT_EXT_PLL_Pin|BTN_PWR_DB_Pin
-                          |BTN_SEL_DB_Pin|A3_USB_ISO_Pin|MUTE_USB_ISO_Pin|DSD_PCM_USB_ISO_Pin;
+                          |BTN_SEL_DB_Pin|MUTE_USB_ISO_Pin|DSD_PCM_USB_ISO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EN_I2S_ISO_Pin PWR_CTRL_Pin MCLK_SEL_ISO_Pin */
-  GPIO_InitStruct.Pin = EN_I2S_ISO_Pin|PWR_CTRL_Pin|MCLK_SEL_ISO_Pin;
+  /*Configure GPIO pins : EN_I2S_ISO_Pin PWR_CTRL_Pin RECLKBYPS_Pin MCLK_SEL_ISO_Pin */
+  GPIO_InitStruct.Pin = EN_I2S_ISO_Pin|PWR_CTRL_Pin|RECLKBYPS_Pin|MCLK_SEL_ISO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1165,6 +1185,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void SetRoute (Route_t route)
 {
+
+  DeviceMuteOn();
+
   switch(route)
   {
     case ROUTE_USB:{
@@ -1231,7 +1254,7 @@ XmosStatus_t ReadXmosStaus(void)
     status |= DI_DSD_PCM_USB;
   else
     status &= ~DI_A0_USB;
-
+ // printf("%d", status);
   return (XmosStatus_t)status;
 }
 
@@ -1508,8 +1531,13 @@ void DeviceMuteOff(void)
 void IR_NEC_Parser (uint8_t address, uint8_t command)
 {
   printf("IR REMOTE ADDRESS:0x%02X COMMAND:0x%02X\r\n", address, command);
+  Device.RemoteCommand = command;
+}
 
-  switch(command)
+
+void RemoteTask(void)
+{
+  switch(Device.RemoteCommand)
   {
     /*--- Power On/Off ---*/
     case 0x4D:
@@ -1531,18 +1559,17 @@ void IR_NEC_Parser (uint8_t address, uint8_t command)
       break;
     }
 
-
     /*--- Mute ---*/
     case 0x16:
     {
       if(UserIsMute())
-        DeviceMuteOff();
+        UserMuteOff();
       else
-        DeviceMuteOn();
+        UserMuteOn();
       break;
     }
-
   }
+  Device.RemoteCommand = 0;
 }
 
 /* DEBUG ---------------------------------------------------------------------*/
