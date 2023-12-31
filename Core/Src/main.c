@@ -346,12 +346,13 @@ int main(void)
             flag = 0;
 
             /*--- LR Swap ---*/
+            /*
             BD34301_LefRightSwapOff();
             if(Device.Route.Curr == ROUTE_I2S_HDMI)
             {
-              //printf("LR Swap ON\r\n");
               BD34301_LefRightSwapOn();
             }
+            */
 
             switch(Device.AudioType.Curr)
             {
@@ -456,7 +457,9 @@ int main(void)
     Device.XmosStatus.Curr = ReadXmosStaus();
     if(Device.Route.Curr == ROUTE_USB)
     {
-      BD34301_LefRightSwapOff();
+      /*
+       * BD34301_LefRightSwapOff();
+       */
       if(Device.XmosStatus.Pre != Device.XmosStatus.Curr)
       {
         if(flag == 0)
@@ -1125,7 +1128,6 @@ AudioTypes_t GetAudioType()
       if((lbclk < bclk) && (bclk < hbclk))
       {
         result = i;
-        //printf("Talalt %d\r\n", i);
         break;
       }
     }
@@ -1254,7 +1256,6 @@ XmosStatus_t ReadXmosStaus(void)
     status |= DI_DSD_PCM_USB;
   else
     status &= ~DI_A0_USB;
- // printf("%d", status);
   return (XmosStatus_t)status;
 }
 
@@ -1525,15 +1526,12 @@ void DeviceMuteOff(void)
     HAL_GPIO_WritePin(DAC_MUTE_COM_GPIO_Port, DAC_MUTE_COM_Pin, GPIO_PIN_SET);
 }
 
-
-
 /* IR REMOTE -----------------------------------------------------------------*/
 void IR_NEC_Parser (uint8_t address, uint8_t command)
 {
   printf("IR REMOTE ADDRESS:0x%02X COMMAND:0x%02X\r\n", address, command);
   Device.RemoteCommand = command;
 }
-
 
 void RemoteTask(void)
 {
