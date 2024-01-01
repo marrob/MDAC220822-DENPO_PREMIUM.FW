@@ -225,18 +225,18 @@ typedef struct _AppTypeDef
 #define DEVICE_MNF              "KONVOLUCIO"
 #define DEVICE_MNF_SIZE         sizeof(DEVICE_MNF)
 
-/*** PCM->I2S PCM9211 ***/
+/*--- PCM->I2S PCM9211 ---*/
 #define PCM9211_DEVICE_ADDRESS  0x86
 
-/*** DAC -> BD34 ***/
+/*--- DAC -> BD34 ---*/
 #define BD34_DEVICE_ADDRESS     0x38
 
-/*** EEPROM -> 24AA025E48***/
+/*--- EEPROM -> 24AA025E48 ---*/
 #define EEPROM_DEVICE_ADDRESS   0xA2
 
 #define DEVICE_GO_SLEEP_SEC  59000
 
-/*** COM ***/
+/*-- COM ---*/
 #define RS485_TX_HOLD_MS      1
 #define RS485_CMD_LENGTH      35
 #define RS485_ARG1_LENGTH     35
@@ -249,8 +249,7 @@ typedef struct _AppTypeDef
 #define CLIENT_TX_ADDR        0x30
 #define CLIENT_RX_ADDR        0x03
 
-
-/*** User Leds ***/
+/*--- User Leds ---*/
 #define USR_LED_POWER     0x0002
 #define USR_LED_LOCK      0x0004
 #define USR_LED_EXTREF    0x0008
@@ -262,7 +261,7 @@ typedef struct _AppTypeDef
 #define USR_LED_USB       0x4000
 
 
-/*** EEPROM MAP ***/
+/*--- EEPROM MAP ---*/
 #define EEPROM_ADDR_FIRST_START  0x0000
 #define EEPROM_ADDR_BOOTUP_CNT   0x0004
 #define EEPROM_ADDR_LAST_ROUTE   0x0008
@@ -274,22 +273,23 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
-/*** User Leds ***/
+/*--- User Leds ---*/
 void UsrLeds_Init(SPI_HandleTypeDef *spi);
 void UsrLeds_On(uint16_t usr_led);
 void UsrLeds_Off(uint16_t usr_led);
 
-/*** Communication ***/
+/*--- Communication ---*/
 void Com_Init(UART_HandleTypeDef *uart, DMA_HandleTypeDef *dma);
 void Com_Task(void);
 
 void SetMasterClock(MasterClocks_t clk );
 
-/*** EEPROM ***/
+/*--- EEPROM ---*/
 void Eeprom_Init(I2C_HandleTypeDef *hi2c, uint8_t deviceAddress);
 HAL_StatusTypeDef Eeprom_ReadU32(uint8_t address, uint32_t *data);
 HAL_StatusTypeDef Eeprom_WriteU32(uint8_t address, uint32_t data);
 
+/*--- Global Variables ---*/
 extern Device_t Device;
 
 /* USER CODE END EFP */

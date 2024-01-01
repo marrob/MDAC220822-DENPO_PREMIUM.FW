@@ -275,6 +275,8 @@ int main(void)
   Eeprom_ReadU32(EEPROM_ADDR_BOOTUP_CNT, &Device.Diag.BootupCnt);
   Device.Diag.BootupCnt++;
   Eeprom_WriteU32(EEPROM_ADDR_BOOTUP_CNT, Device.Diag.BootupCnt);
+
+  //!!!Torlésre jelöve...
   UpdateSelectorLeds(Device.Route.Curr);
 
   /*--- FrMeter ---*/

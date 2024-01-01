@@ -11,9 +11,11 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 
-#define EEPRPOM_PAGE_SIZE      16 //24AA025E48
-#define EEPROM_DEV_TIMEOUT_MS  100
+/*--- 24AA025E48 ---*/
+#define EEPRPOM_PAGE_SIZE      16
 #define EEPROM_SIZE_BYTE       256
+
+#define EEPROM_DEV_TIMEOUT_MS  100
 
 /* Private variables ---------------------------------------------------------*/
 static I2C_HandleTypeDef *_hi2c;
