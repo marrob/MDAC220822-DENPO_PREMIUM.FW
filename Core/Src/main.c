@@ -175,6 +175,10 @@ uint8_t DeviceIsOn(void);
 void ButtonsTask(void);
 void RemoteTask(void);
 
+/*** ReClock ***/
+void ReClockBypassOff(void);
+void ReClockBypassOn(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -347,15 +351,6 @@ int main(void)
           {
             flag = 0;
 
-            /*--- LR Swap ---*/
-            /*
-            BD34301_LefRightSwapOff();
-            if(Device.Route.Curr == ROUTE_I2S_HDMI)
-            {
-              BD34301_LefRightSwapOn();
-            }
-            */
-
             switch(Device.AudioType.Curr)
             {
                case AUDIO_PCM_32_0KHZ:{
@@ -459,9 +454,6 @@ int main(void)
     Device.XmosStatus.Curr = ReadXmosStaus();
     if(Device.Route.Curr == ROUTE_USB)
     {
-      /*
-       * BD34301_LefRightSwapOff();
-       */
       if(Device.XmosStatus.Pre != Device.XmosStatus.Curr)
       {
         if(flag == 0)
@@ -561,29 +553,6 @@ int main(void)
       }
     }
 
-    /*
-     * Ezt látszólag mindig használja az XMOS szám váltáskor.
-     *
-     * de DSD->PCM váltáskor a sistergést nem nyomja el.
-     */
-    /*
-     * Törlésre jelöve, átveszi a hardweres némitas a helyet
-    if(Device.Route.Curr == ROUTE_USB)
-    {
-      static uint8_t preXmosMute;
-      if(preXmosMute != XmosIsMute())
-      {
-        uint8_t currXmosMute = XmosIsMute();
-        Device.Diag.XmosMuteSignaledCnt++;
-        if(currXmosMute)
-          BD34301_RegWrite(0x2A, 0x00); //Mute On
-        else
-          BD34301_RegWrite(0x2A, 0x03); //Mute Off
-        preXmosMute = currXmosMute;
-      }
-    }
-    */
-
     if(Device.Route.Pre != Device.Route.Curr){
       SetRoute(Device.Route.Curr);
       Device.AudioType.Pre = AUDIO_UNKNOWN;
@@ -607,27 +576,46 @@ int main(void)
       Device.Volume.Pre = Device.Volume.Curr;
     }
 
+
+
+
     /*
      * Re-Colck bypass
+     *
+     *A ReClock a PCM 192-ig müködik, azután Bypassojla...
+     *
+     * 240109_1609
+     * Viktorral átbeszéltük a működést, és arra jutottunk, hogy az I2S és
+     * a SPDIF módokban bypass-oljuk a reclockert, az USB módban pedig úgy működik,
+     * ahogy eddig kértem.
+     *
      */
-    if(Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
-        Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
-        Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
-        Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
-        Device.DacAudioFormat == DAC_DSD_64  ||
-        Device.DacAudioFormat == DAC_DSD_128  ||
-        Device.DacAudioFormat == DAC_DSD_256  ||
-        Device.DacAudioFormat == DAC_DSD_512
-      )
+    if(Device.Route.Curr == ROUTE_USB )
     {
-      /*--- BYPASS ACTIVE ---*/
-      HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_SET);
+       if(Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
+          Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
+          Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
+          Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
+          Device.DacAudioFormat == DAC_DSD_64  ||
+          Device.DacAudioFormat == DAC_DSD_128  ||
+          Device.DacAudioFormat == DAC_DSD_256  ||
+          Device.DacAudioFormat == DAC_DSD_512
+        )
+      {
+         ReClockBypassOn();
+      }
+      else
+      {
+        ReClockBypassOff();
+      }
     }
     else
     {
-      /*--- RECLOCK ACTIVE ---*/
-      HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_RESET);
+      ReClockBypassOn();
     }
+
+
+
 
     LiveLedTask(&hLiveLed);
     Com_Task();
@@ -1498,12 +1486,14 @@ void UserMuteOn(void)
 {
   Device.UserIsMute = 1;
   DeviceMuteOn();
+  UsrLeds_On(USR_LED_MUTE);
 }
 
 void UserMuteOff(void)
 {
   Device.UserIsMute = 0;
   DeviceMuteOff();
+  UsrLeds_Off(USR_LED_MUTE);
 }
 
 uint8_t UserIsMute(void)
@@ -1635,6 +1625,21 @@ void UpTimeTask(void)
     timestamp = HAL_GetTick();
     Device.UpTimeSec++;
   }
+}
+
+
+/* ReClock--------------------------------------------------------------------*/
+void ReClockBypassOn(void)
+{
+  /*--- BYPASS ACTIVE ---*/
+  HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_SET);
+}
+
+
+void ReClockBypassOff(void)
+{
+  /*--- RECLOCK ACTIVE ---*/
+  HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_RESET);
 }
 
 

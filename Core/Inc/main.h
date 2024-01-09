@@ -218,7 +218,7 @@ typedef struct _AppTypeDef
 
 #define DEVICE_NAME             "MDAC220822-DENPO PREMIUM"
 #define DEVICE_NAME_SIZE        sizeof(DEVICE_NAME)
-#define DEVICE_FW               "231230_1019"
+#define DEVICE_FW               "240109_1700"
 #define DEVICE_FW_SIZE          sizeof(DEVICDSD_PCME_FW)
 #define DEVICE_PCB              "00"
 #define DEVICE_PCB_SIZE         sizeof(DEVICE_PCB)
@@ -259,6 +259,8 @@ typedef struct _AppTypeDef
 #define USR_LED_TOS       0x1000
 #define USR_LED_I2S       0x2000
 #define USR_LED_USB       0x4000
+//Az új MUTE jelző piros LED bekötésével. Az U800 (74HCT595D) Q7 (PIN7) kimenetét fogjuk erre használni.
+#define USR_LED_MUTE      0x8000
 
 
 /*--- EEPROM MAP ---*/
