@@ -614,9 +614,6 @@ int main(void)
       ReClockBypassOn();
     }
 
-
-
-
     LiveLedTask(&hLiveLed);
     Com_Task();
     UpTimeTask();
@@ -1302,7 +1299,7 @@ void DevicePowerOn(void)
 
   DeviceWake();
 
-  DeviceMuteOff();
+  UserMuteOff();
 }
 
 void DevicePowerOff(void)
@@ -1313,10 +1310,10 @@ void DevicePowerOff(void)
   HAL_GPIO_WritePin(PWR_CTRL_GPIO_Port, PWR_CTRL_Pin, GPIO_PIN_SET);
 
   /*--- Minden LED-et kikapcsolok ---*/
-  UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF);
+  UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF | USR_LED_MUTE);
 
   /*--- Minden LED-et kikapcsolok ---*/
-  UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF);
+  UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF | USR_LED_MUTE);
 
   DeviceMuteOn();
 }
@@ -1453,6 +1450,11 @@ void UpdateSelectorLeds(Route_t route)
   }
 }
 
+/*
+ *
+ * Visszafelé, ha a külső referenciát lekapcsolom, akkor kijelzi a display, hogy nincs EXTREF és LOCK sem, de ha lockolnak az oszcik, nem jön vissza a LOCK LED a display-en, csak a már említett kézi frissítéssel lehet előcsalogatni! Az EXTREF kijelzése teljesen jó, a LOCK kijelzés előfordul hogy nem az igazat mutatja.
+ * Beleépítettem a MUTE piros LED-jét a megadott shift regiszter kimenetére. Mindig világít, ezt szeretném invertálni, tehát ha nincs MUTE, akkor ne világítson, és ha a távvezérlőről lenémítom, akkor azt jelezze ki. A távvezérlő sajnos Viktornál maradt, így ezt most nem tudom korrekt módon tesztelni...
+ */
 
 void UpdateLockIntExtStatus(void)
 {
@@ -1467,6 +1469,8 @@ void UpdateLockIntExtStatus(void)
           UsrLeds_On(USR_LED_LOCK);
         else
           UsrLeds_Off(USR_LED_LOCK);
+
+        Device.Lock.Pre = Device.Lock.Curr;
       }
       Device.IntExt.Curr = HAL_GPIO_ReadPin(INT_EXT_PLL_GPIO_Port, INT_EXT_PLL_Pin);
       if(Device.IntExt.Curr != Device.IntExt.Pre)
@@ -1475,6 +1479,8 @@ void UpdateLockIntExtStatus(void)
           UsrLeds_On(USR_LED_EXTREF);
         else
           UsrLeds_Off(USR_LED_EXTREF);
+
+        Device.IntExt.Pre = Device.IntExt.Curr;
       }
     }
   }
@@ -1482,6 +1488,8 @@ void UpdateLockIntExtStatus(void)
 
 
 /*  Mute---- -----------------------------------------------------------------*/
+
+//A Mute LED érdekes... a MuteOn funkcióban kapcsolja be (elméletileg)  szóval más probléma lehet...
 void UserMuteOn(void)
 {
   Device.UserIsMute = 1;
@@ -1531,6 +1539,7 @@ void RemoteTask(void)
   {
     /*--- Power On/Off ---*/
     case 0x4D:
+    case 0x03:
     {
       if(DeviceIsOn())
         DevicePowerOff();
@@ -1542,20 +1551,27 @@ void RemoteTask(void)
     /*--- Source ---*/
     case 0x54:
     {
-      if(DeviceIsSleep())
-        DeviceWake();
-      else
-        DeviceSelectNextRoute();
+      if(Device.IsOn)
+      {
+        if(DeviceIsSleep())
+          DeviceWake();
+        else
+          DeviceSelectNextRoute();
+      }
       break;
     }
 
     /*--- Mute ---*/
     case 0x16:
+    case 0x07:
     {
-      if(UserIsMute())
-        UserMuteOff();
-      else
-        UserMuteOn();
+      if(Device.IsOn)
+      {
+        if(UserIsMute())
+          UserMuteOff();
+        else
+          UserMuteOn();
+      }
       break;
     }
   }
