@@ -17,6 +17,8 @@
 static UART_HandleTypeDef *_uart;
 static DMA_HandleTypeDef *_dma;
 
+extern Device_t Device;
+
 char  UartRxBuffer[UART_BUFFER_SIZE];
 char  UartTxBuffer[UART_BUFFER_SIZE];
 

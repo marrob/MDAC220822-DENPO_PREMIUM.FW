@@ -28,6 +28,7 @@ void UsrLeds_Init(SPI_HandleTypeDef *spi)
   HAL_Delay(1000);
   UsrLeds_Off(0x0000);
   HAL_Delay(1000);
+  UsrLeds_Off(0x0000);
 }
 
 void UsrLeds_On(uint16_t usr_led)

@@ -291,8 +291,11 @@ void Eeprom_Init(I2C_HandleTypeDef *hi2c, uint8_t deviceAddress);
 HAL_StatusTypeDef Eeprom_ReadU32(uint8_t address, uint32_t *data);
 HAL_StatusTypeDef Eeprom_WriteU32(uint8_t address, uint32_t data);
 
-/*--- Global Variables ---*/
-extern Device_t Device;
+
+/* --- FreqMeas ---*/
+void FreqMeas_Start(void);
+AudioTypes_t FreqMeas_GetAudioType(void);
+
 
 /* USER CODE END EFP */
 
