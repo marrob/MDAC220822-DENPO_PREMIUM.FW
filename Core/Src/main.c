@@ -133,9 +133,9 @@ void UpdateSelectorLeds(Route_t route);
 void DevicePowerOn(void);
 void DevicePowerOff(void);
 void DeviceSleep(void);
-void DeviceWake(void);
-uint8_t DeviceIsSleep(void);
-void SleepTask(void);
+void DisplayWake(void);
+uint8_t IsDisplaySleep(void);
+void DisplaySleepTask(void);
 uint8_t DeviceIsOn(void);
 void ButtonsTask(void);
 void RemoteTask(void);
@@ -260,7 +260,6 @@ int main(void)
   /*--- Infrared Receiver ---*/
   IR_NEC_Init(&htim4, TIM_CHANNEL_4);
 
-  printf("Hello World\r\n");
 
   /* USER CODE END 2 */
 
@@ -582,7 +581,7 @@ int main(void)
     UpTimeTask();
     ButtonsTask();
     UpdateLockIntExtStatus();
-    SleepTask();
+    DisplaySleepTask();
     RemoteTask();
     DebugTask(Device.DebugState);
 
@@ -1177,7 +1176,7 @@ void DevicePowerOn(void)
   Device.XmosStatus.Pre = XMOS_UNKNOWN;
   Device.Volume.Curr = 100;
 
-  DeviceWake();
+  DisplayWake();
 
   //DeviceMuteOff ();
   UserMuteOff();
@@ -1210,7 +1209,7 @@ void DeviceSelectNextRoute(void)
   /*--- Minden módositás után elmentem az aktuális állapotot ---*/
   Eeprom_WriteU32(EEPROM_ADDR_LAST_ROUTE, Device.Route.Curr);
 
-  DeviceWake();
+  DisplayWake();
 }
 
 void DeviceSleep(void)
@@ -1218,13 +1217,13 @@ void DeviceSleep(void)
   /*--- Minden LED-et kikapcsolok kivéve a POWRER-t  ---*/
   UsrLeds_Off( USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF);
 
-  Device.IsSleep = 1;
+  Device.DisplayIsSleep = 1;
 }
 
-void DeviceWake(void)
+void DisplayWake(void)
 {
   /*--- Innetől ébren van a készülék vagy módositja az ébrenléti timeout kezdetét ---*/
-  Device.IsSleep = 0;
+  Device.DisplayIsSleep = 0;
   Device.WakeStartTimestamp = HAL_GetTick();
 
   /*--- Route akautális LED-jének bekapcsolása ---*/
@@ -1245,9 +1244,9 @@ void DeviceWake(void)
     UsrLeds_Off(USR_LED_EXTREF);
 }
 
-uint8_t DeviceIsSleep(void)
+uint8_t IsDisplaySleep(void)
 {
-  return Device.IsSleep;
+  return Device.DisplayIsSleep;
 }
 
 uint8_t DeviceIsOn(void)
@@ -1255,9 +1254,9 @@ uint8_t DeviceIsOn(void)
   return Device.IsOn;
 }
 
-void SleepTask(void)
+void DisplaySleepTask(void)
 {
-  if(!DeviceIsSleep())
+  if(!IsDisplaySleep())
   {
     if(HAL_GetTick() - Device.WakeStartTimestamp > DEVICE_GO_SLEEP_SEC )
     {
@@ -1307,8 +1306,8 @@ void ButtonsTask(void)
   if((Device.Buttons & BUTTON_SELECTOR) == BUTTON_SELECTOR && !selectorBtnBlock && DeviceIsOn())
   {
     selectorBtnBlock = 1;
-    if(DeviceIsSleep())
-      DeviceWake();
+    if(IsDisplaySleep())
+      DisplayWake();
     else
       DeviceSelectNextRoute();
   }
@@ -1341,7 +1340,7 @@ void UpdateLockIntExtStatus(void)
 {
   if(DeviceIsOn())
   {
-    if(!DeviceIsSleep())
+    if(!IsDisplaySleep())
     {
       Device.Lock.Curr = HAL_GPIO_ReadPin(LOCK_PLL_GPIO_Port, LOCK_PLL_Pin);
       if(Device.Lock.Curr != Device.Lock.Pre)
@@ -1437,8 +1436,8 @@ void RemoteTask(void)
     {
       if(Device.IsOn)
       {
-        if(DeviceIsSleep())
-          DeviceWake();
+        if(IsDisplaySleep())
+          DisplayWake();
         else
           DeviceSelectNextRoute();
       }
@@ -1533,6 +1532,7 @@ void ReClockBypassOn(void)
 {
   /*--- BYPASS ACTIVE ---*/
   HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_SET);
+  Device.ReClockBypassIsActiveStatus = true;
 }
 
 
@@ -1540,6 +1540,8 @@ void ReClockBypassOff(void)
 {
   /*--- RECLOCK ACTIVE ---*/
   HAL_GPIO_WritePin(RECLKBYPS_GPIO_Port, RECLKBYPS_Pin, GPIO_PIN_RESET);
+
+  Device.ReClockBypassIsActiveStatus = false;
 }
 
 

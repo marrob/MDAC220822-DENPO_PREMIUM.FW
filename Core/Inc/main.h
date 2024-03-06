@@ -36,6 +36,7 @@ extern "C" {
 
 #include "pcm9211.h"
 #include "bd34301.h"
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -182,8 +183,10 @@ typedef struct _AppTypeDef
   uint8_t IsOn;
   uint8_t Buttons;
 
-  uint32_t IsSleep;
+  uint32_t DisplayIsSleep;
   uint32_t WakeStartTimestamp;
+
+  bool ReClockBypassIsActiveStatus;
 
   struct _Diag
   {
