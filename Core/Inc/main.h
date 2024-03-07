@@ -221,7 +221,7 @@ typedef struct _AppTypeDef
 
 #define DEVICE_NAME             "MDAC220822-DENPO PREMIUM"
 #define DEVICE_NAME_SIZE        sizeof(DEVICE_NAME)
-#define DEVICE_FW               "240109_1700"
+#define DEVICE_FW               "240307_2100"
 #define DEVICE_FW_SIZE          sizeof(DEVICDSD_PCME_FW)
 #define DEVICE_PCB              "00"
 #define DEVICE_PCB_SIZE         sizeof(DEVICE_PCB)
