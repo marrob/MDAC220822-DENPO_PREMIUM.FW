@@ -1181,7 +1181,6 @@ void DevicePowerOn(void)
 
   DisplayWake();
 
-  //DeviceMuteOff ();
   UserMuteOff();
 }
 
@@ -1232,14 +1231,14 @@ void DisplayWake(void)
   /*--- Route akautális LED-jének bekapcsolása ---*/
   UpdateSelectorLeds(Device.Route.Curr);
 
-  /* --- LOCK állapotát beolvsom elmentem és kijelzem az aktuális állapotot ---*/
+  /* --- LOCK ---*/
   Device.Lock.Pre = HAL_GPIO_ReadPin(LOCK_PLL_GPIO_Port, LOCK_PLL_Pin);
   if(Device.Lock.Pre)
     UsrLeds_On(USR_LED_LOCK);
   else
     UsrLeds_Off(USR_LED_LOCK);
 
-  /* --- INT_EXT állapotát beolvsom elmentem és kijelzem az aktuális állapotot ---*/
+  /* --- INT_EXT ---*/
   Device.IntExt.Pre = HAL_GPIO_ReadPin(INT_EXT_PLL_GPIO_Port, INT_EXT_PLL_Pin);
   if(Device.IntExt.Pre)
     UsrLeds_On(USR_LED_EXTREF);
@@ -1425,7 +1424,7 @@ void RemoteTask(void)
   {
     /*--- Power On/Off ---*/
     case 0x4D:
-    case 0x03:
+    //case 0x03:
     {
       if(DeviceIsOn())
         DevicePowerOff();
@@ -1434,7 +1433,7 @@ void RemoteTask(void)
       break;
     }
 
-    /*--- Source ---*/
+    /*--- Route ---*/
     case 0x54:
     {
       if(Device.IsOn)
@@ -1449,7 +1448,7 @@ void RemoteTask(void)
 
     /*--- Mute ---*/
     case 0x16:
-    case 0x07:
+    //case 0x07:
     {
       if(Device.IsOn)
       {
