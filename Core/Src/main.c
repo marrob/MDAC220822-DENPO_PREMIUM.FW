@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include "display.h"
 #include "ir_nec_rx.h"
 #include "LiveLed.h"
 /* USER CODE END Includes */
@@ -245,6 +246,13 @@ int main(void)
   Device.Diag.BootupCnt++;
   Eeprom_WriteU32(EEPROM_ADDR_BOOTUP_CNT, Device.Diag.BootupCnt);
 
+  /*--- Display ---*/
+  DisplayInit(&hi2c1, SSD1306_I2C_DEV_ADDRESS);
+  DisplayClear();
+  DisplayUpdate();
+  DisplaySetCursor(0, 4);
+  DisplayDrawString("Hello World", &GfxFont7x8, SSD1306_WHITE );
+  DisplayUpdate();
 
   /*--- FrMeter ---*/
   FreqMeas_Start();

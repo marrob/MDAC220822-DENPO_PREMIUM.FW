@@ -221,7 +221,7 @@ typedef struct _AppTypeDef
 
 #define DEVICE_NAME             "MDAC220822-DENPO PREMIUM"
 #define DEVICE_NAME_SIZE        sizeof(DEVICE_NAME)
-#define DEVICE_FW               "240307_2100"
+#define DEVICE_FW               "240408_1927"
 #define DEVICE_FW_SIZE          sizeof(DEVICDSD_PCME_FW)
 #define DEVICE_PCB              "00"
 #define DEVICE_PCB_SIZE         sizeof(DEVICE_PCB)
@@ -234,8 +234,9 @@ typedef struct _AppTypeDef
 /*--- DAC -> BD34 ---*/
 #define BD34_DEVICE_ADDRESS     0x38
 
-/*--- EEPROM -> 24AA025E48 ---*/
-#define EEPROM_DEVICE_ADDRESS   0xA2
+/*--- I2C ---*/
+#define EEPROM_DEVICE_ADDRESS   0xA2 //24AA025E48
+#define SSD1306_I2C_DEV_ADDRESS 0x78
 
 #define DEVICE_GO_SLEEP_SEC  59000
 
