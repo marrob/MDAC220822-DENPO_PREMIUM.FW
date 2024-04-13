@@ -59,7 +59,6 @@
 #define DI_DSD_PCM_USB            ((uint8_t)1<<4)
 #define DI_XMOS_MUTE              ((uint8_t)1<<5)
 
-
 /*** BUTTONS ***/
 #define BUTTON_POWER      ((uint8_t)1<<1)
 #define BUTTON_SELECTOR   ((uint8_t)1<<2)
@@ -73,17 +72,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
-
 SPI_HandleTypeDef hspi1;
-
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
-
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
-
 /* USER CODE BEGIN PV */
 
 Device_t Device;
@@ -107,8 +102,6 @@ static void MX_TIM4_Init(void);
 /*** LiveLed ***/
 void LiveLedOff(void);
 void LiveLedOn(void);
-
-
 void SetMasterClock(MasterClocks_t clk);
 
 /*** XMOS/USB ***/
@@ -198,32 +191,11 @@ int main(void)
     Device.Diag.WakeUpFromWdtReset = 1;
   }
 
-  /*** LiveLed ***/
+  /*--- LiveLed ---*/
   hLiveLed.LedOffFnPtr = &LiveLedOff;
   hLiveLed.LedOnFnPtr = &LiveLedOn;
   hLiveLed.HalfPeriodTimeMs = 500;
   LiveLedInit(&hLiveLed);
-
-#if debug
-  /*--- Defualt ---*/
-  Device.Route.Pre = ROUTE_USB;
-  Device.Route.Curr = ROUTE_USB;
-  Device.DacAudioFormat = DAC_PCM_44_1KHZ;
-  Device.MasterClock = CLK_22_5792MHZ;
-  Device.XmosStatus.Pre = XMOS_UNKNOWN;
-  Device.Volume.Curr = 100;
-
-  HAL_GPIO_WritePin(EN_I2S_ISO_GPIO_Port, EN_I2S_ISO_Pin, GPIO_PIN_SET); //ON -> Deselect I2S-HDMI        //BCLK ->R529, EN_I2S_IS ->R583
-  HAL_GPIO_WritePin(EN_USB_ISO_GPIO_Port, EN_USB_ISO_Pin, GPIO_PIN_SET); // ON -> Select USB Input        //BCLK ->R521, EN_USB_ISO ->R579
-  HAL_GPIO_WritePin(EN_SPDIF_ISO_GPIO_Port, EN_SPDIF_ISO_Pin, GPIO_PIN_RESET); // OFF -> Deselect SPDIF   //BCLK ->R531, EN_SPDIF_ISO ->R591
-
-
-  /* --- Minden ki ---*/
-  HAL_GPIO_WritePin(EN_I2S_ISO_GPIO_Port, EN_I2S_ISO_Pin, GPIO_PIN_SET); //ON -> Deselect I2S-HDMI
-  HAL_GPIO_WritePin(EN_USB_ISO_GPIO_Port, EN_USB_ISO_Pin, GPIO_PIN_RESET); // OFF -> Deselect USB Input
-  HAL_GPIO_WritePin(EN_SPDIF_ISO_GPIO_Port, EN_SPDIF_ISO_Pin, GPIO_PIN_RESET); // OFF -> Deselect SPDIF
-
-#endif
 
   /*--- User Leds ---*/
   UsrLeds_Init(&hspi1);
@@ -276,9 +248,6 @@ int main(void)
 
   /*--- FrMeter ---*/
   FreqMeas_Start();
-  PCM9211_Init(&hi2c1, PCM9211_DEVICE_ADDRESS);
-  BD34301_Reset();
-  BD34301_Init(&hi2c1, BD34_DEVICE_ADDRESS);
 
   /*--- Device ---*/
   DevicePowerOff();
@@ -530,21 +499,19 @@ int main(void)
                 };
               }
 
-
-
               BD34301_DigitalPowerOff();
               BD34301_SoftwareResetOn();
 
               /* Re-Colck bypass
-              *
-              *A ReClock a PCM 192-ig müködik, azután Bypassojla...
-              *
+              * A ReClock a PCM 192-ig müködik, azután Bypassojla...
               * 240109_1609
               * Viktorral átbeszéltük a működést, és arra jutottunk, hogy az I2S és
               * a SPDIF módokban bypass-oljuk a reclockert, az USB módban pedig úgy működik,
               * ahogy eddig kértem.
               */
-              if(Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
+              if
+                (Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
+                 //Device.DacAudioFormat ==   DAC_PCM_176_4KHZ ||
                  Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
                  Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
                  Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
@@ -597,42 +564,6 @@ int main(void)
         BD34301_RegWrite(0x22, reg);
         Device.Volume.Pre = Device.Volume.Curr;
       }
-
-      /*
-       * Re-Colck bypass
-       *
-       *A ReClock a PCM 192-ig müködik, azután Bypassojla...
-       *
-       * 240109_1609
-       * Viktorral átbeszéltük a működést, és arra jutottunk, hogy az I2S és
-       * a SPDIF módokban bypass-oljuk a reclockert, az USB módban pedig úgy működik,
-       * ahogy eddig kértem.
-       *
-       */
-      /*
-      if(Device.Route.Curr == ROUTE_USB )
-      {
-         if(Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
-            Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
-            Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
-            Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
-            Device.DacAudioFormat == DAC_DSD_64  ||
-            Device.DacAudioFormat == DAC_DSD_128  ||
-            Device.DacAudioFormat == DAC_DSD_256  ||
-            Device.DacAudioFormat == DAC_DSD_512
-          )
-        {
-           ReClockBypassOn();
-        }
-        else
-        {
-          ReClockBypassOff();
-        }
-      }
-      else
-      {
-        ReClockBypassOn();
-      }*/
     }
 
     LiveLedTask(&hLiveLed);
@@ -1215,27 +1146,35 @@ void DevicePowerOn(void)
 {
   Device.IsOn = 1;
 
-  /* --- Analóg táp kikapcsolása --- */
+  /* --- DAC Analóg és digitális táp kikapcsolása --- */
   //PWR_CTRL = 0 (ON)
   HAL_GPIO_WritePin(PWR_CTRL_GPIO_Port, PWR_CTRL_Pin, GPIO_PIN_RESET);
 
-  HAL_Delay(500);
+  HAL_Delay(100);  //Kritikus, ha túl kicsi nem indul el semmi az I2C buszon
 
-  /* --- Bekapcsolom a Power LED-et ---*/
-  UsrLeds_On(USR_LED_POWER);
+  /*--- Ez kikényszeriti, hogy minden állapot frissüljön ---*/
+  Device.XmosStatus.Pre = XMOS_UNKNOWN;
+  Device.Volume.Curr = 100;
+  Device.AudioType.Pre = AUDIO_UNKNOWN;
+  Device.Route.Pre = 255;
+
+  /*--- DAC Inicializálsáa ---*/
+  BD34301_Reset();
+  BD34301_Init(&hi2c1, BD34_DEVICE_ADDRESS);
+
+  /*--- PCM Init  ---*/
+  PCM9211_Init(&hi2c1, PCM9211_DEVICE_ADDRESS);
+
+  HAL_Delay(200); //Kritikus, ha túl kicsi pl 100ms akkor nem indul időben az pcm9211
 
   /*--- Load Last Route ---*/
   uint32_t lastRoute;
   Eeprom_ReadU32(EEPROM_ADDR_LAST_ROUTE, &lastRoute);
   Device.Route.Curr = lastRoute;
-
-  /*--- Bekapcsolom a Rout-hoz tartozó LED-et-- */
-  UpdateSelectorLeds(Device.Route.Curr);
   SetRoute (Device.Route.Curr);
 
-
-  Device.XmosStatus.Pre = XMOS_UNKNOWN;
-  Device.Volume.Curr = 100;
+  /* --- Bekapcsolom a Power LED-et ---*/
+  UsrLeds_On(USR_LED_POWER);
 
   DisplayWake();
 
@@ -1246,14 +1185,11 @@ void DevicePowerOff(void)
 {
   Device.IsOn = 0;
 
-  /* --- Analóg táp kikapcsolása --- */
+  /* --- Analóg + Digit táp kikapcsolása --- */
   HAL_GPIO_WritePin(PWR_CTRL_GPIO_Port, PWR_CTRL_Pin, GPIO_PIN_SET);
 
   /*--- Minden LED-et kikapcsolok ---*/
-  UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF | USR_LED_MUTE);
-
-  /*--- Minden LED-et kikapcsolok ---*/
-  UsrLeds_Off(USR_LED_POWER| USR_LED_AES | USR_LED_BNC | USR_LED_RCA | USR_LED_TOS | USR_LED_I2S | USR_LED_USB | USR_LED_LOCK | USR_LED_EXTREF | USR_LED_MUTE);
+  UsrLeds_Off(USR_LED_ALL);
 
   DeviceMuteOn();
 }
@@ -1374,7 +1310,6 @@ void ButtonsTask(void)
   if((Device.Buttons & BUTTON_SELECTOR) != BUTTON_SELECTOR)
     selectorBtnBlock = 0;
 }
-
 
 void UpdateSelectorLeds(Route_t route)
 {
@@ -1514,6 +1449,8 @@ void RemoteTask(void)
           UserMuteOff();
         else
           UserMuteOn();
+
+        DebugDisplayUpdate();
       }
       break;
     }
@@ -1613,49 +1550,49 @@ void ReClockBypassOff(void)
 
 void DebugDisplayUpdate(void)
 {
-  char audioType[] = "????????"; //max 8+1
-  char line[20] = {0};
-  char route[] = "????"; // max  4+1
+  char line[20];
+  char type[10];
+  char route[10];
 
   if(Device.Route.Curr == ROUTE_USB)
   {
     switch(Device.XmosStatus.Curr)
     {
-      case XMOS_PCM_44_1KHZ:  strcpy(audioType,"PCM44.1 ");break;
-      case XMOS_PCM_48_0KHZ:  strcpy(audioType,"PCM48.0 ");break;
-      case XMOS_PCM_88_2KHZ:  strcpy(audioType,"PCM88.2 ");break;
-      case XMOS_PCM_96_0KHZ:  strcpy(audioType,"PCM96.0 ");break;
-      case XMOS_PCM_176_4KHZ: strcpy(audioType,"PCM176.4");break;
-      case XMOS_PCM_192_KHZ:  strcpy(audioType,"PCM192  ");break;
-      case XMOS_PCM_352_8KHZ: strcpy(audioType,"PCM352.8");break;
-      case XMOS_PCM_384_KHZ:  strcpy(audioType,"PCM384  ");break;
-      case XMOS_DSD_64:       strcpy(audioType,"DSD64   ");break;
-      case XMOS_DSD_128:      strcpy(audioType,"DSD128  ");break;
-      case XMOS_DSD_256:      strcpy(audioType,"DSD256  ");break;
-      case XMOS_UNKNOWN:      strcpy(audioType,"????????");break;
-      default:                strcpy(audioType,"default");break;
+      case XMOS_PCM_44_1KHZ:  strcpy(type,"PCM44.1 ");break;
+      case XMOS_PCM_48_0KHZ:  strcpy(type,"PCM48.0 ");break;
+      case XMOS_PCM_88_2KHZ:  strcpy(type,"PCM88.2 ");break;
+      case XMOS_PCM_96_0KHZ:  strcpy(type,"PCM96.0 ");break;
+      case XMOS_PCM_176_4KHZ: strcpy(type,"PCM176.4");break;
+      case XMOS_PCM_192_KHZ:  strcpy(type,"PCM192  ");break;
+      case XMOS_PCM_352_8KHZ: strcpy(type,"PCM352.8");break;
+      case XMOS_PCM_384_KHZ:  strcpy(type,"PCM384  ");break;
+      case XMOS_DSD_64:       strcpy(type,"DSD64   ");break;
+      case XMOS_DSD_128:      strcpy(type,"DSD128  ");break;
+      case XMOS_DSD_256:      strcpy(type,"DSD256  ");break;
+      case XMOS_UNKNOWN:      strcpy(type,"????????");break;
+      default:                strcpy(type,"def?????");break;
     }
   }
   else
   {
     switch(Device.AudioType.Curr)
     {
-      case AUDIO_PCM_32_0KHZ:  strcpy(audioType,"PCM32   "); break;
-      case AUDIO_PCM_44_1KHZ:  strcpy(audioType,"PCM44.1 "); break;
-      case AUDIO_PCM_48_0KHZ:  strcpy(audioType,"PCM48.0 "); break;
-      case AUDIO_PCM_88_2KHZ:  strcpy(audioType,"PCM88.2 "); break;
-      case AUDIO_PCM_96_0KHZ:  strcpy(audioType,"PCM96.0 "); break;
-      case AUDIO_PCM_176_4KHZ: strcpy(audioType,"PCM176.4"); break;
-      case AUDIO_PCM_192_KHZ:  strcpy(audioType,"PCM192  "); break;
-      case AUDIO_PCM_352_8KHZ: strcpy(audioType,"PCM352.8"); break;
-      case AUDIO_PCM_384_0KHZ: strcpy(audioType,"PCM384  "); break;
-      case AUDIO_PCM_705_6KHZ: strcpy(audioType,"PCM705.6"); break;
-      case AUDIO_DSD_64:       strcpy(audioType,"DSD64   "); break;
-      case AUDIO_DSD_128:      strcpy(audioType,"DSD128  "); break;
-      case AUDIO_DSD_256:      strcpy(audioType,"DSD256  "); break;
-      case AUDIO_DSD_512:      strcpy(audioType,"PCM512  "); break;
-      case AUDIO_UNKNOWN:      strcpy(audioType,"????????"); break;
-      default:                 strcpy(audioType,"default");break;
+      case AUDIO_PCM_32_0KHZ:  strcpy(type,"PCM32   "); break;
+      case AUDIO_PCM_44_1KHZ:  strcpy(type,"PCM44.1 "); break;
+      case AUDIO_PCM_48_0KHZ:  strcpy(type,"PCM48.0 "); break;
+      case AUDIO_PCM_88_2KHZ:  strcpy(type,"PCM88.2 "); break;
+      case AUDIO_PCM_96_0KHZ:  strcpy(type,"PCM96.0 "); break;
+      case AUDIO_PCM_176_4KHZ: strcpy(type,"PCM176.4"); break;
+      case AUDIO_PCM_192_KHZ:  strcpy(type,"PCM192  "); break;
+      case AUDIO_PCM_352_8KHZ: strcpy(type,"PCM352.8"); break;
+      case AUDIO_PCM_384_0KHZ: strcpy(type,"PCM384  "); break;
+      case AUDIO_PCM_705_6KHZ: strcpy(type,"PCM705.6"); break;
+      case AUDIO_DSD_64:       strcpy(type,"DSD64   "); break;
+      case AUDIO_DSD_128:      strcpy(type,"DSD128  "); break;
+      case AUDIO_DSD_256:      strcpy(type,"DSD256  "); break;
+      case AUDIO_DSD_512:      strcpy(type,"PCM512  "); break;
+      case AUDIO_UNKNOWN:      strcpy(type,"????????"); break;
+      default:                 strcpy(type,"def?????");break;
     }
   }
 
@@ -1688,22 +1625,54 @@ void DebugDisplayUpdate(void)
   }
 
 
-  /*0123456789012345
-   *PCM705.6 HDMI SM
-   *
-   *
+  /*
+   * --- 1 LINE ---
+   * 0123456789012345
+   * PCM705.6 HDMI SM
    */
   DisplayClear();
   DisplaySetCursor(0, 0);
-  sprintf(line, "%s %s",audioType, route);
+  sprintf(line, "%s %s",type, route);
   DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
 
 
+  /*
+   * --- 2 LINE ---
+   * 0123456789012345
+   * BYPS:OFF MCLK:22
+   */
   DisplaySetCursor(0, 8);
+  char bypass[10];
+  char mclk[10];
+
   if(Device.ReClockBypassIsActiveStatus)
-    DisplayDrawString("BYPS:ON ", &GfxFont7x8, SSD1306_WHITE );
+    strcpy(bypass,"BYPS:ON");
   else
-    DisplayDrawString("BYPS:OFF", &GfxFont7x8, SSD1306_WHITE );
+    strcpy(bypass,"BYPS:OFF");
+
+  if(Device.MasterClock == CLK_22_5792MHZ)
+    strcpy(mclk,"MCLK:22");
+  else
+    strcpy(mclk,"MCLK:24");
+  sprintf(line, "%s %s",bypass, mclk);
+  DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
+
+
+  /*
+   * --- 3 LINE ---
+   * 0123456789012345
+   * MUTE:OFF
+   */
+  DisplaySetCursor(0, 16);
+  char usrMute[10];
+
+  if(Device.UserIsMute)
+    strcpy(usrMute,"MUTE:ON");
+  else
+    strcpy(usrMute,"MUTE:OFF");
+
+  sprintf(line, "%s", usrMute );
+  DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
 
   DisplayUpdate();
 
