@@ -23,12 +23,6 @@ void UsrLeds_Init(SPI_HandleTypeDef *spi)
   _spi = spi;
   _ledState = 0;
   HAL_GPIO_WritePin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin, GPIO_PIN_RESET);
-
-  UsrLeds_On(0xFFFF);
-  HAL_Delay(1000);
-  UsrLeds_Off(0x0000);
-  HAL_Delay(1000);
-  UsrLeds_Off(0x0000);
 }
 
 void UsrLeds_On(uint16_t usr_led)
@@ -39,7 +33,7 @@ void UsrLeds_On(uint16_t usr_led)
 
 void UsrLeds_Off(uint16_t usr_led)
 {
-  _ledState &= ~usr_led;
+  _ledState &= (uint16_t)~usr_led;
   UsrLeds_Update(_ledState);
 }
 
