@@ -28,12 +28,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "ir_samsung.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include "display.h"
-#include "ir_nec_rx.h"
 #include "LiveLed.h"
 /* USER CODE END Includes */
 
@@ -256,7 +257,7 @@ int main(void)
   Com_Init(&huart1, &hdma_usart1_rx);
 
   /*--- Infrared Receiver ---*/
-  IR_NEC_Init(&htim4, TIM_CHANNEL_4);
+  IR_SAM_Init(&htim4, TIM_CHANNEL_4);
 
 
   /* USER CODE END 2 */
@@ -1404,11 +1405,26 @@ void DeviceMuteOff(void)
   }
 }
 
+
+
+
 /* IR REMOTE -----------------------------------------------------------------*/
-void IR_NEC_Parser (uint8_t address, uint8_t command)
+int ir_not_exec = 0;
+int ir_exec =0;
+void IR_SAM_Parser(uint32_t code)
 {
-  printf("IR REMOTE ADDRESS:0x%02X COMMAND:0x%02X\r\n", address, command);
-  Device.RemoteCommand = command;
+  static uint32_t lastrun;
+  if(HAL_GetTick() - lastrun > 1000)
+  {
+    printf("IR REMOTE CODE:0x%08lX\r\n", code);
+    Device.RemoteCommand = code;
+    lastrun  = HAL_GetTick();
+    ir_exec++;
+  }
+  else
+  {
+    ir_not_exec++;
+  }
 }
 
 void RemoteTask(void)
@@ -1416,8 +1432,7 @@ void RemoteTask(void)
   switch(Device.RemoteCommand)
   {
     /*--- Power On/Off ---*/
-    case 0x4D:
-    //case 0x03:
+    case IR_POWER:
     {
       if(DeviceIsOn())
         DevicePowerOff();
@@ -1427,7 +1442,7 @@ void RemoteTask(void)
     }
 
     /*--- Route ---*/
-    case 0x54:
+    case IR_CH_UP:
     {
       if(Device.IsOn)
       {
@@ -1440,7 +1455,7 @@ void RemoteTask(void)
     }
 
     /*--- Mute ---*/
-    case 0x16:
+    case IR_MUTE:
     //case 0x07:
     {
       if(Device.IsOn)
@@ -1455,7 +1470,7 @@ void RemoteTask(void)
       break;
     }
   }
-  Device.RemoteCommand = 0;
+ Device.RemoteCommand = 0;
 }
 
 /* DEBUG ---------------------------------------------------------------------*/
