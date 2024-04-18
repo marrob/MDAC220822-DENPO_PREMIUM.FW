@@ -420,23 +420,32 @@ int main(void)
       Device.XmosStatus.Curr = ReadXmosStaus();
       if(Device.Route.Curr == ROUTE_USB)
       {
+        /*
+         * Update: 240418_0906
+         * Gábro mérései alapján az XMOS némito jele renben van.
+         */
+        if(XmosIsMute())
+          DeviceMuteOn();
+        else
+          DeviceMuteOff();
+
         if(Device.XmosStatus.Pre != Device.XmosStatus.Curr)
         {
-          if(flag == 0)
-          {
-            flag = 1;
-            DeviceMuteOn();
-            BD34301_MuteOn();
+         //if(flag == 0)
+         //{
+         //   flag = 1;
+         //   DeviceMuteOn();
+         //   BD34301_MuteOn();
             Device.Diag.XmosStatusChangedCnt++;
-            timestamp = HAL_GetTick();
-            Device.AudioType.Pre = XMOS_UNKNOWN; //ez kikényszerití a némítás-visszakapcsolást, abban az esetben is ha pattanás/rövid hiba törétn a stream-ben
-          }
+         //   timestamp = HAL_GetTick();
+         //   Device.AudioType.Pre = XMOS_UNKNOWN; //ez kikényszerití a némítás-visszakapcsolást, abban az esetben is ha pattanás/rövid hiba törétn a stream-ben
+         // }
 
-          if(flag == 1)
-          {
-            if(HAL_GetTick() - timestamp > 500)
-            {
-              flag = 0;
+         // if(flag == 1)
+         // {
+         //   if(HAL_GetTick() - timestamp > 500)
+         //   {
+         //    flag = 0;
               switch(Device.XmosStatus.Curr)
               {
                 case XMOS_PCM_44_1KHZ:{
@@ -512,7 +521,8 @@ int main(void)
               */
               if
                 (Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
-                 //Device.DacAudioFormat ==   DAC_PCM_176_4KHZ ||
+                 Device.DacAudioFormat ==   DAC_PCM_176_4KHZ ||
+                 Device.DacAudioFormat ==   DAC_PCM_192_KHZ ||
                  Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
                  Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
                  Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
@@ -535,11 +545,11 @@ int main(void)
               BD34301_SoftwareResetOff();
               BD34301_DigitalPowerOn();
               BD34301_RamClear(); //Kritkus, nem szól a PCM ha nincs
-              DeviceMuteOff();
+              //DeviceMuteOff();
               BD34301_MuteOff();
               Device.XmosStatus.Pre = Device.XmosStatus.Curr;
-            }
-          }
+            //}
+          //}
         }
       }
 
@@ -1418,6 +1428,7 @@ void IR_SAM_Parser(uint32_t code)
   {
     printf("IR REMOTE CODE:0x%08lX\r\n", code);
     Device.RemoteCommand = code;
+    Device.RemoteLastCommand = code;
     lastrun  = HAL_GetTick();
     ir_exec++;
   }
@@ -1641,7 +1652,7 @@ void DebugDisplayUpdate(void)
 
 
   /*
-   * --- 1 LINE ---
+   * --- 1. LINE ---
    * 0123456789012345
    * PCM705.6 HDMI SM
    */
@@ -1652,7 +1663,7 @@ void DebugDisplayUpdate(void)
 
 
   /*
-   * --- 2 LINE ---
+   * --- 2. LINE ---
    * 0123456789012345
    * BYPS:OFF MCLK:22
    */
@@ -1674,7 +1685,7 @@ void DebugDisplayUpdate(void)
 
 
   /*
-   * --- 3 LINE ---
+   * --- 3. LINE ---
    * 0123456789012345
    * MUTE:OFF
    */
@@ -1689,9 +1700,16 @@ void DebugDisplayUpdate(void)
   sprintf(line, "%s", usrMute );
   DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
 
+  /*
+   * --- 4. LINE ----
+   * 0123456789012345
+   * IR:0x00000000
+   */
+  DisplaySetCursor(0, 24);
+  sprintf(line,"IR:0x%08lX\r\n", Device.RemoteLastCommand);
+  DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
+
   DisplayUpdate();
-
-
 }
 
 

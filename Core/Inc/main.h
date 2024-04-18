@@ -176,6 +176,7 @@ typedef struct _AppTypeDef
   uint8_t UserIsMute;
 
   uint32_t RemoteCommand;
+  uint32_t RemoteLastCommand;
 
   DacAudioFormat_t DacAudioFormat;
 
@@ -221,7 +222,7 @@ typedef struct _AppTypeDef
 
 #define DEVICE_NAME             "MDAC220822"
 #define DEVICE_NAME_SIZE        sizeof(DEVICE_NAME)
-#define DEVICE_FW               "240414_2108"
+#define DEVICE_FW               "240418_0906"
 #define DEVICE_FW_SIZE          sizeof(DEVICDSD_PCME_FW)
 #define DEVICE_PCB              "00"
 #define DEVICE_PCB_SIZE         sizeof(DEVICE_PCB)
