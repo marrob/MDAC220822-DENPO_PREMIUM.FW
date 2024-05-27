@@ -73,13 +73,17 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+
 SPI_HandleTypeDef hspi1;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
+
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
+
 /* USER CODE BEGIN PV */
 
 Device_t Device;
@@ -154,6 +158,7 @@ void DebugDisplayUpdate(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
