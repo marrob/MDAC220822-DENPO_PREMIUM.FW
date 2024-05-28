@@ -238,6 +238,7 @@ int main(void)
 
 
   /*--- Display ---*/
+  char line[20];
   DisplayInit(&hi2c1, SSD1306_I2C_DEV_ADDRESS);
   DisplayClear();
   DisplayUpdate();
@@ -248,6 +249,16 @@ int main(void)
   DisplayDrawString(" DENPO PREMIUM  ", &GfxFont7x8, SSD1306_WHITE );
   DisplaySetCursor(0, 16);
   DisplayDrawString(DEVICE_FW, &GfxFont7x8, SSD1306_WHITE );
+
+#ifdef BD34_ROLL_OFF_SLOW
+  sprintf(line, "%sSL", DEVICE_FW);
+#endif
+#ifdef BD34_ROLL_OFF_SHARP
+  sprintf(line, "%sSH", DEVICE_FW);
+#endif
+  DisplaySetCursor(0, 16);
+  DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
+
   DisplaySetCursor(0, 24);
   DisplayDrawString(DEVICE_NAME, &GfxFont7x8, SSD1306_WHITE );
   DisplayUpdate();
@@ -436,125 +447,109 @@ int main(void)
 
         if(Device.XmosStatus.Pre != Device.XmosStatus.Curr)
         {
-         //if(flag == 0)
-         //{
-         //   flag = 1;
-         //   DeviceMuteOn();
-         //   BD34301_MuteOn();
-            Device.Diag.XmosStatusChangedCnt++;
-         //   timestamp = HAL_GetTick();
-         //   Device.AudioType.Pre = XMOS_UNKNOWN; //ez kikényszerití a némítás-visszakapcsolást, abban az esetben is ha pattanás/rövid hiba törétn a stream-ben
-         // }
-
-         // if(flag == 1)
-         // {
-         //   if(HAL_GetTick() - timestamp > 500)
-         //   {
-         //    flag = 0;
-              switch(Device.XmosStatus.Curr)
-              {
-                case XMOS_PCM_44_1KHZ:{
-                    Device.DacAudioFormat = DAC_PCM_44_1KHZ;
-                    Device.MasterClock = CLK_22_5792MHZ;
-                    break;
-                  }
-                case XMOS_PCM_48_0KHZ:{
-                  Device.DacAudioFormat = DAC_PCM_48_0KHZ;
-                  Device.MasterClock = CLK_24_575MHZ;
-                  break;
-                }
-                case XMOS_PCM_88_2KHZ:{
-                  Device.DacAudioFormat = DAC_PCM_88_2KHZ;
-                  Device.MasterClock = CLK_22_5792MHZ;
-                  break;
-                }
-                case XMOS_PCM_96_0KHZ:{
-                  Device.DacAudioFormat = DAC_PCM_96_0KHZ;
-                  Device.MasterClock = CLK_24_575MHZ;
-                  break;
-                }
-                case XMOS_PCM_176_4KHZ:{
-                  Device.DacAudioFormat = DAC_PCM_176_4KHZ;
-                  Device.MasterClock = CLK_22_5792MHZ;
-                  break;
-                }
-                case XMOS_PCM_192_KHZ:{
-                  Device.DacAudioFormat = DAC_PCM_192_KHZ;
-                  Device.MasterClock = CLK_24_575MHZ;
-                  break;
-                }
-                case XMOS_PCM_352_8KHZ:{
-                  Device.DacAudioFormat = DAC_PCM_352_8KHZ;
-                  Device.MasterClock = CLK_22_5792MHZ;
-                  break;
-                }
-                case XMOS_PCM_384_KHZ:{
-                  Device.DacAudioFormat = DAC_PCM_384_0KHZ;
-                  Device.MasterClock = CLK_24_575MHZ;
-                  break;
-                }
-                case XMOS_DSD_64:{
-                  Device.DacAudioFormat = DAC_DSD_64;
-                  Device.MasterClock = CLK_22_5792MHZ;
-                  break;
-                }
-                case XMOS_DSD_128:{
-                  Device.DacAudioFormat = DAC_DSD_128;
-                  Device.MasterClock = CLK_22_5792MHZ;
-                  break;
-                }
-                case XMOS_DSD_256:{
-                  Device.DacAudioFormat = DAC_DSD_256;
-                  Device.MasterClock = CLK_22_5792MHZ;
-                  break;
-                }
-                default:
-                {
-                  Device.Diag.XmosFormatUnknownCnt++;
-                };
+          Device.Diag.XmosStatusChangedCnt++;
+          switch(Device.XmosStatus.Curr)
+          {
+            case XMOS_PCM_44_1KHZ:{
+                Device.DacAudioFormat = DAC_PCM_44_1KHZ;
+                Device.MasterClock = CLK_22_5792MHZ;
+                break;
               }
+            case XMOS_PCM_48_0KHZ:{
+              Device.DacAudioFormat = DAC_PCM_48_0KHZ;
+              Device.MasterClock = CLK_24_575MHZ;
+              break;
+            }
+            case XMOS_PCM_88_2KHZ:{
+              Device.DacAudioFormat = DAC_PCM_88_2KHZ;
+              Device.MasterClock = CLK_22_5792MHZ;
+              break;
+            }
+            case XMOS_PCM_96_0KHZ:{
+              Device.DacAudioFormat = DAC_PCM_96_0KHZ;
+              Device.MasterClock = CLK_24_575MHZ;
+              break;
+            }
+            case XMOS_PCM_176_4KHZ:{
+              Device.DacAudioFormat = DAC_PCM_176_4KHZ;
+              Device.MasterClock = CLK_22_5792MHZ;
+              break;
+            }
+            case XMOS_PCM_192_KHZ:{
+              Device.DacAudioFormat = DAC_PCM_192_KHZ;
+              Device.MasterClock = CLK_24_575MHZ;
+              break;
+            }
+            case XMOS_PCM_352_8KHZ:{
+              Device.DacAudioFormat = DAC_PCM_352_8KHZ;
+              Device.MasterClock = CLK_22_5792MHZ;
+              break;
+            }
+            case XMOS_PCM_384_KHZ:{
+              Device.DacAudioFormat = DAC_PCM_384_0KHZ;
+              Device.MasterClock = CLK_24_575MHZ;
+              break;
+            }
+            case XMOS_DSD_64:{
+              Device.DacAudioFormat = DAC_DSD_64;
+              Device.MasterClock = CLK_22_5792MHZ;
+              break;
+            }
+            case XMOS_DSD_128:{
+              Device.DacAudioFormat = DAC_DSD_128;
+              Device.MasterClock = CLK_22_5792MHZ;
+              break;
+            }
+            case XMOS_DSD_256:{
+              Device.DacAudioFormat = DAC_DSD_256;
+              Device.MasterClock = CLK_22_5792MHZ;
+              break;
+            }
+            default:
+            {
+              Device.Diag.XmosFormatUnknownCnt++;
+            };
+          }
 
-              BD34301_DigitalPowerOff();
-              BD34301_SoftwareResetOn();
+          BD34301_DigitalPowerOff();
+          BD34301_SoftwareResetOn();
 
-              /* Re-Colck bypass
-              * A ReClock a PCM 192-ig müködik, azután Bypassojla...
-              * 240109_1609
-              * Viktorral átbeszéltük a működést, és arra jutottunk, hogy az I2S és
-              * a SPDIF módokban bypass-oljuk a reclockert, az USB módban pedig úgy működik,
-              * ahogy eddig kértem.
-              */
-              if
-                (Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
-                 Device.DacAudioFormat ==   DAC_PCM_176_4KHZ ||
-                 Device.DacAudioFormat ==   DAC_PCM_192_KHZ ||
-                 Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
-                 Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
-                 Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
-                 Device.DacAudioFormat == DAC_DSD_64  ||
-                 Device.DacAudioFormat == DAC_DSD_128  ||
-                 Device.DacAudioFormat == DAC_DSD_256  ||
-                 Device.DacAudioFormat == DAC_DSD_512)
-              {
-                ReClockBypassOn();
-              }else{
-                ReClockBypassOff();
-              }
+          /* Re-Colck bypass
+          * A ReClock a PCM 192-ig müködik, azután Bypassojla...
+          * 240109_1609
+          * Viktorral átbeszéltük a működést, és arra jutottunk, hogy az I2S és
+          * a SPDIF módokban bypass-oljuk a reclockert, az USB módban pedig úgy működik,
+          * ahogy eddig kértem.
+          */
+          if
+            (Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
+             Device.DacAudioFormat ==   DAC_PCM_176_4KHZ ||
+             Device.DacAudioFormat ==   DAC_PCM_192_KHZ ||
+             Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
+             Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
+             Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
+             Device.DacAudioFormat == DAC_DSD_64  ||
+             Device.DacAudioFormat == DAC_DSD_128  ||
+             Device.DacAudioFormat == DAC_DSD_256  ||
+             Device.DacAudioFormat == DAC_DSD_512)
+          {
+            ReClockBypassOn();
+          }else{
+            ReClockBypassOff();
+          }
 
-              Device.Diag.DacReConfgiurationCnt++;
-              SetMasterClock(Device.MasterClock);
-              DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
-              BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
-              DebugDisplayUpdate();
+          Device.Diag.DacReConfgiurationCnt++;
+          SetMasterClock(Device.MasterClock);
+          DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
+          BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
+          DebugDisplayUpdate();
 
-              BD34301_SoftwareResetOff();
-              BD34301_DigitalPowerOn();
-              BD34301_RamClear(); //Kritkus, nem szól a PCM ha nincs
-              //DeviceMuteOff();
-              BD34301_MuteOff();
-              Device.XmosStatus.Pre = Device.XmosStatus.Curr;
-            //}
-          //}
+          BD34301_SoftwareResetOff();
+          BD34301_DigitalPowerOn();
+          BD34301_RamClear(); //Kritkus, nem szól a PCM ha nincs
+          //DeviceMuteOff();
+          BD34301_MuteOff();
+          Device.XmosStatus.Pre = Device.XmosStatus.Curr;
         }
       }
 

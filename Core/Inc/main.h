@@ -220,9 +220,10 @@ typedef struct _AppTypeDef
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+
 #define DEVICE_NAME             "MDAC220822"
 #define DEVICE_NAME_SIZE        sizeof(DEVICE_NAME)
-#define DEVICE_FW               "240418_0906"
+#define DEVICE_FW               "240528_1202"
 #define DEVICE_FW_SIZE          sizeof(DEVICDSD_PCME_FW)
 #define DEVICE_PCB              "00"
 #define DEVICE_PCB_SIZE         sizeof(DEVICE_PCB)
@@ -234,6 +235,8 @@ typedef struct _AppTypeDef
 
 /*--- DAC -> BD34 ---*/
 #define BD34_DEVICE_ADDRESS     0x38
+//#define BD34_ROLL_OFF_SLOW //Gábornak
+#define BD34_ROLL_OFF_SHARP  //Viktornak
 
 /*--- I2C ---*/
 #define EEPROM_DEVICE_ADDRESS   0xA2 //24AA025E48
