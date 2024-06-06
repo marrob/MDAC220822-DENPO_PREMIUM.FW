@@ -56,24 +56,6 @@ typedef enum _Xtatus_t{
   XMOS_DSD_256 = 0x04
 }XmosStatus_t;
 
-typedef enum _DacAudioFormat_t{
-  DAC_PCM_32_0KHZ = 0,
-  DAC_PCM_44_1KHZ,  //1
-  DAC_PCM_48_0KHZ,  //2
-  DAC_PCM_88_2KHZ,  //3
-  DAC_PCM_96_0KHZ,  //4
-  DAC_PCM_176_4KHZ, //5
-  DAC_PCM_192_KHZ,  //6
-  DAC_PCM_352_8KHZ, //7
-  DAC_PCM_384_0KHZ, //8
-  DAC_PCM_705_6KHZ, //9
-  DAC_PCM_768_0KHZ, //10
-  DAC_DSD_64,
-  DAC_DSD_128,
-  DAC_DSD_256,
-  DAC_DSD_512,
-}DacAudioFormat_t;
-
 typedef enum _Route_t
 {
   ROUTE_USB,
@@ -178,7 +160,9 @@ typedef struct _AppTypeDef
   uint32_t RemoteCommand;
   uint32_t RemoteLastCommand;
 
-  DacAudioFormat_t DacAudioFormat;
+  //BD34301_Mode_t DacMode;
+  enum BD34301_Mode DacMode;
+  enum BD34301_RollOff DacRollOff;
 
   uint32_t UpTimeSec;
   uint8_t IsOn;
@@ -276,6 +260,7 @@ typedef struct _AppTypeDef
 #define EEPROM_ADDR_FIRST_START  0x0000
 #define EEPROM_ADDR_BOOTUP_CNT   0x0004
 #define EEPROM_ADDR_LAST_ROUTE   0x0008
+#define EEPROM_ADDR_DAC_ROLLOFF  0x000C
 
 /* USER CODE END EM */
 

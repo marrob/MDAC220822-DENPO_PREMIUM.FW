@@ -218,6 +218,7 @@ int main(void)
     HAL_Delay(500);
   }
 
+
   /*--- EEPROM ---*/
   Eeprom_Init(&hi2c1, EEPROM_DEVICE_ADDRESS);
 
@@ -229,6 +230,7 @@ int main(void)
     Eeprom_WriteU32(EEPROM_ADDR_FIRST_START, 0x55AA);
     Eeprom_WriteU32(EEPROM_ADDR_BOOTUP_CNT, 0);
     Eeprom_WriteU32(EEPROM_ADDR_LAST_ROUTE, ROUTE_USB);
+    Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, BD34301_ROLL_OFF_SHARP);
   }
 
   /*--- BOOTUP COUNTER ---*/
@@ -238,7 +240,6 @@ int main(void)
 
 
   /*--- Display ---*/
-  char line[20];
   DisplayInit(&hi2c1, SSD1306_I2C_DEV_ADDRESS);
   DisplayClear();
   DisplayUpdate();
@@ -250,14 +251,8 @@ int main(void)
   DisplaySetCursor(0, 16);
   DisplayDrawString(DEVICE_FW, &GfxFont7x8, SSD1306_WHITE );
 
-#ifdef BD34_ROLL_OFF_SLOW
-  sprintf(line, "%sSL", DEVICE_FW);
-#endif
-#ifdef BD34_ROLL_OFF_SHARP
-  sprintf(line, "%sSH", DEVICE_FW);
-#endif
   DisplaySetCursor(0, 16);
-  DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
+  DisplayDrawString(DEVICE_FW, &GfxFont7x8, SSD1306_WHITE );
 
   DisplaySetCursor(0, 24);
   DisplayDrawString(DEVICE_NAME, &GfxFont7x8, SSD1306_WHITE );
@@ -333,73 +328,73 @@ int main(void)
               switch(Device.AudioType.Curr)
               {
                  case AUDIO_PCM_32_0KHZ:{
-                   Device.DacAudioFormat = DAC_PCM_32_0KHZ;
+                   Device.DacMode = BD34301_PCM_32_0KHZ;
                    Device.MasterClock = CLK_22_5792MHZ;
                    break;
                  }
                  case AUDIO_PCM_44_1KHZ:{
-                   Device.DacAudioFormat = DAC_PCM_44_1KHZ;
+                   Device.DacMode = BD34301_PCM_44_1KHZ;
                    Device.MasterClock = CLK_22_5792MHZ;
                    break;
                  }
                  case AUDIO_PCM_48_0KHZ:{
-                   Device.DacAudioFormat = DAC_PCM_48_0KHZ;
+                   Device.DacMode = BD34301_PCM_48_0KHZ;
                    Device.MasterClock = CLK_24_575MHZ;
                    break;
                  }
                  case AUDIO_PCM_88_2KHZ:{
-                   Device.DacAudioFormat = DAC_PCM_88_2KHZ;
+                   Device.DacMode = BD34301_PCM_88_2KHZ;
                    Device.MasterClock = CLK_22_5792MHZ;
                    break;
                  }
                  case AUDIO_PCM_96_0KHZ:{
-                   Device.DacAudioFormat = DAC_PCM_96_0KHZ;
+                   Device.DacMode = BD34301_PCM_96_0KHZ;
                    Device.MasterClock = CLK_24_575MHZ;
                    break;
                  }
                  case AUDIO_PCM_176_4KHZ:{
-                   Device.DacAudioFormat = DAC_PCM_176_4KHZ;
+                   Device.DacMode = BD34301_PCM_176_4KHZ;
                    Device.MasterClock = CLK_22_5792MHZ;
                    break;
                  }
                  case AUDIO_PCM_192_KHZ:{
-                   Device.DacAudioFormat = DAC_PCM_192_KHZ;
+                   Device.DacMode = BD34301_PCM_192_KHZ;
                    Device.MasterClock = CLK_24_575MHZ;
                    break;
                  }
                  case AUDIO_PCM_352_8KHZ:{
-                     Device.DacAudioFormat = DAC_PCM_352_8KHZ;
+                     Device.DacMode = BD34301_PCM_352_8KHZ;
                      Device.MasterClock = CLK_22_5792MHZ;
                      break;
                  }
                  case AUDIO_PCM_384_0KHZ:{
-                     Device.DacAudioFormat = DAC_PCM_384_0KHZ;
+                     Device.DacMode = BD34301_PCM_384_0KHZ;
                      Device.MasterClock = CLK_24_575MHZ;
                    break;
                  }
                  case AUDIO_PCM_705_6KHZ:{
-                     Device.DacAudioFormat = DAC_PCM_705_6KHZ;
+                     Device.DacMode = BD34301_PCM_705_6KHZ;
                      Device.MasterClock = CLK_24_575MHZ;
                      break;
                  }
                  case AUDIO_DSD_64:{
-                     Device.DacAudioFormat = DAC_DSD_64;
+                     Device.DacMode = BD34301_DSD_64;
                      Device.MasterClock = CLK_22_5792MHZ;
                      break;
                    }
                  case AUDIO_DSD_128:{
-                   Device.DacAudioFormat = DAC_DSD_128;
+                   Device.DacMode = BD34301_DSD_128;
                    Device.MasterClock = CLK_22_5792MHZ;
                    break;
                  }
                  case AUDIO_DSD_256:{
-                   Device.DacAudioFormat = DAC_DSD_256;
+                   Device.DacMode = BD34301_DSD_256;
                    Device.MasterClock = CLK_22_5792MHZ;
                    break;
                  }
                  case AUDIO_DSD_512:
                  {
-                   Device.DacAudioFormat = DAC_DSD_512;
+                   Device.DacMode = BD34301_DSD_512;
                    Device.MasterClock = CLK_22_5792MHZ;
                    break;
                  }
@@ -416,7 +411,7 @@ int main(void)
               Device.Diag.DacReConfgiurationCnt++;
               SetMasterClock(Device.MasterClock);
               DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
-              BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
+              BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
               DebugDisplayUpdate();
 
               BD34301_SoftwareResetOff();
@@ -451,57 +446,57 @@ int main(void)
           switch(Device.XmosStatus.Curr)
           {
             case XMOS_PCM_44_1KHZ:{
-                Device.DacAudioFormat = DAC_PCM_44_1KHZ;
+                Device.DacMode = BD34301_PCM_44_1KHZ;
                 Device.MasterClock = CLK_22_5792MHZ;
                 break;
               }
             case XMOS_PCM_48_0KHZ:{
-              Device.DacAudioFormat = DAC_PCM_48_0KHZ;
+              Device.DacMode = BD34301_PCM_48_0KHZ;
               Device.MasterClock = CLK_24_575MHZ;
               break;
             }
             case XMOS_PCM_88_2KHZ:{
-              Device.DacAudioFormat = DAC_PCM_88_2KHZ;
+              Device.DacMode = BD34301_PCM_88_2KHZ;
               Device.MasterClock = CLK_22_5792MHZ;
               break;
             }
             case XMOS_PCM_96_0KHZ:{
-              Device.DacAudioFormat = DAC_PCM_96_0KHZ;
+              Device.DacMode = BD34301_PCM_96_0KHZ;
               Device.MasterClock = CLK_24_575MHZ;
               break;
             }
             case XMOS_PCM_176_4KHZ:{
-              Device.DacAudioFormat = DAC_PCM_176_4KHZ;
+              Device.DacMode = BD34301_PCM_176_4KHZ;
               Device.MasterClock = CLK_22_5792MHZ;
               break;
             }
             case XMOS_PCM_192_KHZ:{
-              Device.DacAudioFormat = DAC_PCM_192_KHZ;
+              Device.DacMode = BD34301_PCM_192_KHZ;
               Device.MasterClock = CLK_24_575MHZ;
               break;
             }
             case XMOS_PCM_352_8KHZ:{
-              Device.DacAudioFormat = DAC_PCM_352_8KHZ;
+              Device.DacMode = BD34301_PCM_352_8KHZ;
               Device.MasterClock = CLK_22_5792MHZ;
               break;
             }
             case XMOS_PCM_384_KHZ:{
-              Device.DacAudioFormat = DAC_PCM_384_0KHZ;
+              Device.DacMode = BD34301_PCM_384_0KHZ;
               Device.MasterClock = CLK_24_575MHZ;
               break;
             }
             case XMOS_DSD_64:{
-              Device.DacAudioFormat = DAC_DSD_64;
+              Device.DacMode = BD34301_DSD_64;
               Device.MasterClock = CLK_22_5792MHZ;
               break;
             }
             case XMOS_DSD_128:{
-              Device.DacAudioFormat = DAC_DSD_128;
+              Device.DacMode = BD34301_DSD_128;
               Device.MasterClock = CLK_22_5792MHZ;
               break;
             }
             case XMOS_DSD_256:{
-              Device.DacAudioFormat = DAC_DSD_256;
+              Device.DacMode = BD34301_DSD_256;
               Device.MasterClock = CLK_22_5792MHZ;
               break;
             }
@@ -522,16 +517,16 @@ int main(void)
           * ahogy eddig kértem.
           */
           if
-            (Device.DacAudioFormat == DAC_PCM_352_8KHZ  ||
-             Device.DacAudioFormat ==   DAC_PCM_176_4KHZ ||
-             Device.DacAudioFormat ==   DAC_PCM_192_KHZ ||
-             Device.DacAudioFormat == DAC_PCM_384_0KHZ  ||
-             Device.DacAudioFormat == DAC_PCM_705_6KHZ  ||
-             Device.DacAudioFormat == DAC_PCM_768_0KHZ  ||
-             Device.DacAudioFormat == DAC_DSD_64  ||
-             Device.DacAudioFormat == DAC_DSD_128  ||
-             Device.DacAudioFormat == DAC_DSD_256  ||
-             Device.DacAudioFormat == DAC_DSD_512)
+            (Device.DacMode == BD34301_PCM_352_8KHZ  ||
+             Device.DacMode ==   BD34301_PCM_176_4KHZ ||
+             Device.DacMode ==   BD34301_PCM_192_KHZ ||
+             Device.DacMode == BD34301_PCM_384_0KHZ  ||
+             Device.DacMode == BD34301_PCM_705_6KHZ  ||
+             Device.DacMode == BD34301_PCM_768_0KHZ  ||
+             Device.DacMode == BD34301_DSD_64  ||
+             Device.DacMode == BD34301_DSD_128  ||
+             Device.DacMode == BD34301_DSD_256  ||
+             Device.DacMode == BD34301_DSD_512)
           {
             ReClockBypassOn();
           }else{
@@ -541,7 +536,7 @@ int main(void)
           Device.Diag.DacReConfgiurationCnt++;
           SetMasterClock(Device.MasterClock);
           DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
-          BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
+          BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
           DebugDisplayUpdate();
 
           BD34301_SoftwareResetOff();
@@ -1182,7 +1177,12 @@ void DevicePowerOn(void)
   uint32_t lastRoute;
   Eeprom_ReadU32(EEPROM_ADDR_LAST_ROUTE, &lastRoute);
   Device.Route.Curr = lastRoute;
-  SetRoute (Device.Route.Curr);
+  SetRoute(Device.Route.Curr);
+
+  /*--- Load Last Roll-Off Settings ---*/
+  uint32_t lastRollOff;
+  Eeprom_ReadU32(EEPROM_ADDR_DAC_ROLLOFF, &lastRollOff);
+  Device.DacRollOff = lastRollOff;
 
   /* --- Bekapcsolom a Power LED-et ---*/
   UsrLeds_On(USR_LED_POWER);
@@ -1415,9 +1415,6 @@ void DeviceMuteOff(void)
   }
 }
 
-
-
-
 /* IR REMOTE -----------------------------------------------------------------*/
 int ir_not_exec = 0;
 int ir_exec =0;
@@ -1426,9 +1423,7 @@ void IR_SAM_Parser(uint32_t code)
   static uint32_t lastrun;
   if(HAL_GetTick() - lastrun > 1000)
   {
-    printf("IR REMOTE CODE:0x%08lX\r\n", code);
     Device.RemoteCommand = code;
-    Device.RemoteLastCommand = code;
     lastrun  = HAL_GetTick();
     ir_exec++;
   }
@@ -1436,6 +1431,8 @@ void IR_SAM_Parser(uint32_t code)
   {
     ir_not_exec++;
   }
+  Device.RemoteLastCommand = code; //debaug only
+  printf("IR REMOTE CODE:0x%08lX\r\n", code); //debug only
 }
 
 void RemoteTask(void)
@@ -1467,7 +1464,6 @@ void RemoteTask(void)
 
     /*--- Mute ---*/
     case IR_MUTE:
-    //case 0x07:
     {
       if(Device.IsOn)
       {
@@ -1478,6 +1474,82 @@ void RemoteTask(void)
 
         DebugDisplayUpdate();
       }
+      break;
+    }
+
+    /*--- Roll Off Sharp ---*/
+    case IR_VOLUME_UP:
+    {
+
+      DeviceMuteOn();
+      BD34301_MuteOn();
+      BD34301_DigitalPowerOff();
+      BD34301_SoftwareResetOn();
+      Device.Diag.DacReConfgiurationCnt++;
+
+      Device.DacRollOff = BD34301_ROLL_OFF_SHARP;
+
+      BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+      DebugDisplayUpdate();
+      Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
+
+      for(uint8_t i = 0; i < 2; i++)
+      {
+        UsrLeds_Off(USR_LED_MUTE);
+        DelayMs(100);
+        UsrLeds_On(USR_LED_MUTE);
+        DelayMs(100);
+      }
+
+      BD34301_SoftwareResetOff();
+      BD34301_DigitalPowerOn();
+      BD34301_RamClear();
+      DeviceMuteOff();
+      BD34301_MuteOff();
+
+      if(UserIsMute())
+        UsrLeds_On(USR_LED_MUTE);
+      else
+        UsrLeds_Off(USR_LED_MUTE);
+
+      break;
+    }
+
+
+    /*--- Roll Off Slow ---*/
+    case IR_VOLUME_DOWN:
+    {
+      DeviceMuteOn();
+      BD34301_MuteOn();
+      BD34301_DigitalPowerOff();
+      BD34301_SoftwareResetOn();
+      Device.Diag.DacReConfgiurationCnt++;
+
+      Device.DacRollOff = BD34301_ROLL_OFF_SLOW;
+
+      BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+      DebugDisplayUpdate();
+      Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
+
+      for(uint8_t i = 0; i < 3; i++)
+      {
+        UsrLeds_Off(USR_LED_MUTE);
+        DelayMs(100);
+        UsrLeds_On(USR_LED_MUTE);
+        DelayMs(100);
+      }
+
+      BD34301_SoftwareResetOff();
+      BD34301_DigitalPowerOn();
+      BD34301_RamClear();
+      DeviceMuteOff();
+      BD34301_MuteOff();
+
+      if(UserIsMute())
+        UsrLeds_On(USR_LED_MUTE);
+      else
+        UsrLeds_Off(USR_LED_MUTE);
+
       break;
     }
   }

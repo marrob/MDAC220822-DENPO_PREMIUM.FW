@@ -13,9 +13,11 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
-#define IR_POWER  0x070702FD
-#define IR_MUTE   0x07070FF0
-#define IR_CH_UP  0x070712ED
+#define IR_POWER        0x070702FD
+#define IR_MUTE         0x07070FF0
+#define IR_CH_UP        0x070712ED
+#define IR_VOLUME_UP    0x01
+#define IR_VOLUME_DOWN  0x02
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */

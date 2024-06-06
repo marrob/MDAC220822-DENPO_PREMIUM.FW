@@ -127,12 +127,12 @@ static char* Parser(char *line)
   else if(!strcmp(cmd,"DAC:CONFIG")){
     sscanf(line, "#%x %s %d",&addr, cmd, &intarg);
 
-    Device.DacAudioFormat = intarg;
+    Device.DacMode = intarg;
 
     BD34301_DigitalPowerOff();
     BD34301_SoftwareResetOn();
 
-    BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
+    BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
 
     BD34301_SoftwareResetOff();
     BD34301_DigitalPowerOn();
@@ -142,37 +142,37 @@ static char* Parser(char *line)
     strcpy(buffer, "DAC:CONFIG OK");
   }
   else if(!strcmp(cmd,"DAC:CONFIG?")){
-    sprintf(buffer, "DAC:CONFIG? %02X", (uint8_t)Device.DacAudioFormat);
+    sprintf(buffer, "DAC:CONFIG? %02X", (uint8_t)Device.DacMode);
   }
 
   /*** DAC PARAMS ***/
   else if(!strcmp(cmd,"DAC:PARAMS?")){
     sprintf(buffer, "DAC:PARAMS? %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
-      BD34301_ModeList[Device.DacAudioFormat].Clock2,
-      BD34301_ModeList[Device.DacAudioFormat].AudioIf3,
-      BD34301_ModeList[Device.DacAudioFormat].DsdFilter,
-      BD34301_ModeList[Device.DacAudioFormat].FirFilter1,
-      BD34301_ModeList[Device.DacAudioFormat].FirFilter2,
-      BD34301_ModeList[Device.DacAudioFormat].DeEmph1,
-      BD34301_ModeList[Device.DacAudioFormat].DeEmph2,
-      BD34301_ModeList[Device.DacAudioFormat].DeltaSigma);
+      BD34301_ModeList[Device.DacMode].Clock2,
+      BD34301_ModeList[Device.DacMode].AudioIf3,
+      BD34301_ModeList[Device.DacMode].DsdFilter,
+      BD34301_ModeList[Device.DacMode].FirFilter1,
+      BD34301_ModeList[Device.DacMode].FirFilter2,
+      BD34301_ModeList[Device.DacMode].DeEmph1,
+      BD34301_ModeList[Device.DacMode].DeEmph2,
+      BD34301_ModeList[Device.DacMode].DeltaSigma);
   }
   else if(!strcmp(cmd,"DAC:PARAMS")){
     int arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8;
       sscanf(line, "#%x %s %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
                     &addr, cmd, &arg1, &arg2, &arg3, &arg4, &arg5, &arg6, &arg7, &arg8);
-      BD34301_ModeList[Device.DacAudioFormat].Clock2 = arg1;
-      BD34301_ModeList[Device.DacAudioFormat].AudioIf3  = arg2;
-      BD34301_ModeList[Device.DacAudioFormat].DsdFilter = arg3;
-      BD34301_ModeList[Device.DacAudioFormat].FirFilter1 = arg4;
-      BD34301_ModeList[Device.DacAudioFormat].FirFilter2 = arg5;
-      BD34301_ModeList[Device.DacAudioFormat].DeEmph1 = arg6;
-      BD34301_ModeList[Device.DacAudioFormat].DeEmph2 = arg7;
-      BD34301_ModeList[Device.DacAudioFormat].DeltaSigma = arg8;
+      BD34301_ModeList[Device.DacMode].Clock2 = arg1;
+      BD34301_ModeList[Device.DacMode].AudioIf3  = arg2;
+      BD34301_ModeList[Device.DacMode].DsdFilter = arg3;
+      BD34301_ModeList[Device.DacMode].FirFilter1 = arg4;
+      BD34301_ModeList[Device.DacMode].FirFilter2 = arg5;
+      BD34301_ModeList[Device.DacMode].DeEmph1 = arg6;
+      BD34301_ModeList[Device.DacMode].DeEmph2 = arg7;
+      BD34301_ModeList[Device.DacMode].DeltaSigma = arg8;
       strcpy(buffer, "DAC:CONFIG OK");
       Device.Diag.DacReConfgiurationCnt++;
       SetMasterClock(Device.MasterClock);
-      BD34301_ModeSwitching(&BD34301_ModeList[Device.DacAudioFormat]);
+      BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
   }
 
   /*** ROUTE ***/
