@@ -86,7 +86,6 @@ uint8_t BD34301_Init(I2C_HandleTypeDef *i2c, uint8_t address)
   BD34301_RegWrite(0x60, 0x16);
   BD34301_RegWrite(0x61, 0x16);
 
-
   BD34301_PowerOnSequence();
 
   return BD34_OK;
@@ -168,31 +167,31 @@ void BD34301_ModeSwitching(enum BD34301_Mode mode_idx, enum BD34301_RollOff roll
   BD34301_RegWrite(0x16, mode->DsdFilter);
   BD34301_RegWrite(0x30, mode->FirFilter1);
 
-  uint8_t FirFilter2 = 0;
+  uint8_t firFilter2 = 0;
   if(roll_off == BD34301_ROLL_OFF_SLOW)
   {
     if(mode_idx == BD34301_PCM_32_0KHZ ||
        mode_idx == BD34301_PCM_44_1KHZ ||
        mode_idx == BD34301_PCM_48_0KHZ )
     {
-      FirFilter2 = 0x83;
+      firFilter2 = 0x83;
     }
     else if(mode_idx == BD34301_PCM_88_2KHZ ||
             mode_idx == BD34301_PCM_96_0KHZ)
     {
-      FirFilter2 = 0x04;
+      firFilter2 = 0x04;
     }
     else if(mode_idx ==  BD34301_PCM_176_4KHZ ||
             mode_idx == BD34301_PCM_192_KHZ)
     {
-      FirFilter2 = 0x05;
+      firFilter2 = 0x05;
     }
     else if(mode_idx == BD34301_PCM_352_8KHZ ||
             mode_idx == BD34301_PCM_384_0KHZ ||
             mode_idx == BD34301_PCM_705_6KHZ ||
             mode_idx == BD34301_PCM_768_0KHZ)
     {
-      FirFilter2 = 0x80;
+      firFilter2 = 0x80;
     }
   }
   else
@@ -201,28 +200,28 @@ void BD34301_ModeSwitching(enum BD34301_Mode mode_idx, enum BD34301_RollOff roll
        mode_idx == BD34301_PCM_44_1KHZ ||
        mode_idx == BD34301_PCM_48_0KHZ )
     {
-      FirFilter2 = 0x80;
+      firFilter2 = 0x80;
     }
     else if(mode_idx == BD34301_PCM_88_2KHZ ||
             mode_idx == BD34301_PCM_96_0KHZ)
     {
-      FirFilter2 = 0x01;
+      firFilter2 = 0x01;
     }
     else if(mode_idx ==  BD34301_PCM_176_4KHZ ||
             mode_idx == BD34301_PCM_192_KHZ)
     {
-      FirFilter2 = 0x02;
+      firFilter2 = 0x02;
     }
     else if(mode_idx == BD34301_PCM_352_8KHZ ||
             mode_idx == BD34301_PCM_384_0KHZ ||
             mode_idx == BD34301_PCM_705_6KHZ ||
             mode_idx == BD34301_PCM_768_0KHZ)
     {
-      FirFilter2 = 0x80;
+      firFilter2 = 0x80;
     }
   }
 
-  BD34301_RegWrite(0x31, FirFilter2);
+  BD34301_RegWrite(0x31, firFilter2);
   BD34301_RegWrite(0x33, mode->DeEmph1);
   BD34301_RegWrite(0x33, mode->DeEmph1);
   BD34301_RegWrite(0x34, mode->DeEmph1);

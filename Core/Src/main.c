@@ -1168,6 +1168,7 @@ void DevicePowerOn(void)
   BD34301_Reset();
   BD34301_Init(&hi2c1, BD34_DEVICE_ADDRESS);
 
+
   /*--- PCM Init  ---*/
   PCM9211_Init(&hi2c1, PCM9211_DEVICE_ADDRESS);
 
@@ -1183,6 +1184,7 @@ void DevicePowerOn(void)
   uint32_t lastRollOff;
   Eeprom_ReadU32(EEPROM_ADDR_DAC_ROLLOFF, &lastRollOff);
   Device.DacRollOff = lastRollOff;
+  BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
 
   /* --- Bekapcsolom a Power LED-et ---*/
   UsrLeds_On(USR_LED_POWER);
@@ -1432,7 +1434,7 @@ void IR_SAM_Parser(uint32_t code)
     ir_not_exec++;
   }
   Device.RemoteLastCommand = code; //debaug only
-  printf("IR REMOTE CODE:0x%08lX\r\n", code); //debug only
+  //printf("IR REMOTE CODE:0x%08lX\r\n", code); //debug only
 }
 
 void RemoteTask(void)
@@ -1452,34 +1454,35 @@ void RemoteTask(void)
     /*--- Route ---*/
     case IR_CH_UP:
     {
-      if(Device.IsOn)
-      {
-        if(IsDisplaySleep())
-          DisplayWake();
-        else
-          DeviceSelectNextRoute();
-      }
+      if(!Device.IsOn)
+        break;
+
+      if(IsDisplaySleep())
+        DisplayWake();
+      else
+        DeviceSelectNextRoute();
       break;
     }
 
     /*--- Mute ---*/
     case IR_MUTE:
     {
-      if(Device.IsOn)
-      {
-        if(UserIsMute())
-          UserMuteOff();
-        else
-          UserMuteOn();
+      if(!Device.IsOn)
+        break;
 
-        DebugDisplayUpdate();
-      }
+      if(UserIsMute())
+        UserMuteOff();
+      else
+        UserMuteOn();
+      DebugDisplayUpdate();
       break;
     }
 
     /*--- Roll Off Sharp ---*/
     case IR_VOLUME_UP:
     {
+      if(!Device.IsOn)
+        break;
 
       DeviceMuteOn();
       BD34301_MuteOn();
@@ -1493,7 +1496,7 @@ void RemoteTask(void)
       DebugDisplayUpdate();
       Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
 
-      for(uint8_t i = 0; i < 2; i++)
+      for(uint8_t i = 0; i < 3; i++)
       {
         UsrLeds_Off(USR_LED_MUTE);
         DelayMs(100);
@@ -1519,6 +1522,9 @@ void RemoteTask(void)
     /*--- Roll Off Slow ---*/
     case IR_VOLUME_DOWN:
     {
+      if(!Device.IsOn)
+        break;
+
       DeviceMuteOn();
       BD34301_MuteOn();
       BD34301_DigitalPowerOff();
@@ -1531,7 +1537,7 @@ void RemoteTask(void)
       DebugDisplayUpdate();
       Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
 
-      for(uint8_t i = 0; i < 3; i++)
+      for(uint8_t i = 0; i < 2; i++)
       {
         UsrLeds_Off(USR_LED_MUTE);
         DelayMs(100);
@@ -1603,7 +1609,6 @@ void DebugTask(DebugState_t dbg)
 /* printf --------------------------------------------------------------------*/
 int _write(int file, char *ptr, int len)
 {
-  //HAL_UART_Transmit(&huart1, (uint8_t*)ptr, len, 100);
   int i=0;
   for(i=0 ; i<len ; i++)
     ITM_SendChar((*ptr++));
@@ -1769,7 +1774,13 @@ void DebugDisplayUpdate(void)
   else
     strcpy(usrMute,"MUTE:OFF");
 
-  sprintf(line, "%s", usrMute );
+  char roll[10];
+  if(Device.DacRollOff == BD34301_ROLL_OFF_SHARP)
+    strcpy(roll,"ROLL:SH");
+  else
+    strcpy(roll,"ROLL:SL");
+
+  sprintf(line, "%s %s", usrMute, roll );
   DisplayDrawString(line, &GfxFont7x8, SSD1306_WHITE );
 
   /*
