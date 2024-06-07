@@ -197,6 +197,9 @@ int main(void)
     Device.Diag.WakeUpFromWdtReset = 1;
   }
 
+  /*--- printf for SWO --- */
+  printf("Hello World\r\n");
+
   /*--- LiveLed ---*/
   hLiveLed.LedOffFnPtr = &LiveLedOff;
   hLiveLed.LedOnFnPtr = &LiveLedOn;
@@ -411,7 +414,8 @@ int main(void)
               Device.Diag.DacReConfgiurationCnt++;
               SetMasterClock(Device.MasterClock);
               DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
-              BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+              BD34301_SetRollOff(Device.DacRollOff);
+              BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
               DebugDisplayUpdate();
 
               BD34301_SoftwareResetOff();
@@ -536,7 +540,8 @@ int main(void)
           Device.Diag.DacReConfgiurationCnt++;
           SetMasterClock(Device.MasterClock);
           DelayMs(15); //Kritikus pl 88.2 és 96 váltás között
-          BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+          BD34301_SetRollOff(Device.DacRollOff);
+          BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
           DebugDisplayUpdate();
 
           BD34301_SoftwareResetOff();
@@ -1184,7 +1189,8 @@ void DevicePowerOn(void)
   uint32_t lastRollOff;
   Eeprom_ReadU32(EEPROM_ADDR_DAC_ROLLOFF, &lastRollOff);
   Device.DacRollOff = lastRollOff;
-  BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+  BD34301_SetRollOff(Device.DacRollOff);
+  BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
 
   /* --- Bekapcsolom a Power LED-et ---*/
   UsrLeds_On(USR_LED_POWER);
@@ -1491,8 +1497,8 @@ void RemoteTask(void)
       Device.Diag.DacReConfgiurationCnt++;
 
       Device.DacRollOff = BD34301_ROLL_OFF_SHARP;
-
-      BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+      BD34301_SetRollOff(Device.DacRollOff);
+      BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
       DebugDisplayUpdate();
       Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
 
@@ -1530,10 +1536,9 @@ void RemoteTask(void)
       BD34301_DigitalPowerOff();
       BD34301_SoftwareResetOn();
       Device.Diag.DacReConfgiurationCnt++;
-
       Device.DacRollOff = BD34301_ROLL_OFF_SLOW;
-
-      BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+      BD34301_SetRollOff(Device.DacRollOff);
+      BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
       DebugDisplayUpdate();
       Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
 

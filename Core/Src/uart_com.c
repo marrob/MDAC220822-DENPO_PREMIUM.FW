@@ -116,7 +116,6 @@ static char* Parser(char *line)
   else if(!strcmp(cmd,"DAC:VOL"))
   {
     sscanf(line, "#%x %s %x",&addr, cmd, &intarg);
-    Device.Volume.Curr = intarg;
     strcpy(buffer, "DAC:VOL OK");
   }
   else if (!strcmp(cmd,"DAC:VOL?")){
@@ -126,19 +125,14 @@ static char* Parser(char *line)
   /*** DAC CONFIG ***/
   else if(!strcmp(cmd,"DAC:CONFIG")){
     sscanf(line, "#%x %s %d",&addr, cmd, &intarg);
-
     Device.DacMode = intarg;
-
     BD34301_DigitalPowerOff();
     BD34301_SoftwareResetOn();
-
-    BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
-
+    BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
     BD34301_SoftwareResetOff();
     BD34301_DigitalPowerOn();
     BD34301_RamClear();
     BD34301_MuteOff();
-
     strcpy(buffer, "DAC:CONFIG OK");
   }
   else if(!strcmp(cmd,"DAC:CONFIG?")){
@@ -172,7 +166,7 @@ static char* Parser(char *line)
       strcpy(buffer, "DAC:CONFIG OK");
       Device.Diag.DacReConfgiurationCnt++;
       SetMasterClock(Device.MasterClock);
-      BD34301_ModeSwitching(Device.DacMode, Device.DacRollOff);
+      BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
   }
 
   /*** ROUTE ***/
@@ -184,7 +178,6 @@ static char* Parser(char *line)
   }
   else if(!strcmp(cmd,"ROUTE")){
     sscanf(line, "#%x %s %d",&addr, cmd, &intarg);
-    Device.Route.Curr = intarg;
     strcpy(buffer, "ROUTE OK");
   }
 

@@ -74,8 +74,9 @@ HAL_StatusTypeDef BD34301_RegWrite(uint8_t address, uint8_t data);
 
 uint8_t BD34301_Init(I2C_HandleTypeDef *i2c, uint8_t address);
 void BD34301_Reset(void);
-void BD34301_ModeSwitching(enum BD34301_Mode mode_idx, enum BD34301_RollOff roll_off);
-void BD34301_PrintMode(char *buffer, BD34301_Mode_Params_t *mode);
+void BD34301_SetRollOff(enum BD34301_RollOff roll_off);
+void BD34301_ModeSwitching(BD34301_Mode_Params_t *mode);
+void BD34301_PrintMode(BD34301_Mode_Params_t *mode);
 void BD34301_RamClear(void);
 void BD34301_SoftwareResetOn(void);
 void BD34301_SoftwareResetOff(void);

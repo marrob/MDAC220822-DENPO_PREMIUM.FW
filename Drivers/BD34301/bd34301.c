@@ -104,11 +104,8 @@ void BD34301_PowerOnSequence(void)
 
   /*** Analog Power On ***/
   BD34301_RegWrite(0x03, 0x01);
-
   BD34301_RamClear();
-
   BD34301_MuteOff();
-
 }
 
 
@@ -157,83 +154,90 @@ void BD34301_MuteOff(void)
   BD34301_RegWrite(0x2A, 0x03);
 }
 
-
-void BD34301_ModeSwitching(enum BD34301_Mode mode_idx, enum BD34301_RollOff roll_off)
+void BD34301_ModeSwitching(BD34301_Mode_Params_t *mode)
 {
-  BD34301_Mode_Params_t *mode = &BD34301_ModeList[mode_idx];
   BD34301_RegWrite(0x04, mode->Clock1);
   BD34301_RegWrite(0x06, mode->Clock2);
   BD34301_RegWrite(0x10, mode->AudioIf1);
   BD34301_RegWrite(0x16, mode->DsdFilter);
   BD34301_RegWrite(0x30, mode->FirFilter1);
-
-  uint8_t firFilter2 = 0;
-  if(roll_off == BD34301_ROLL_OFF_SLOW)
-  {
-    if(mode_idx == BD34301_PCM_32_0KHZ ||
-       mode_idx == BD34301_PCM_44_1KHZ ||
-       mode_idx == BD34301_PCM_48_0KHZ )
-    {
-      firFilter2 = 0x83;
-    }
-    else if(mode_idx == BD34301_PCM_88_2KHZ ||
-            mode_idx == BD34301_PCM_96_0KHZ)
-    {
-      firFilter2 = 0x04;
-    }
-    else if(mode_idx ==  BD34301_PCM_176_4KHZ ||
-            mode_idx == BD34301_PCM_192_KHZ)
-    {
-      firFilter2 = 0x05;
-    }
-    else if(mode_idx == BD34301_PCM_352_8KHZ ||
-            mode_idx == BD34301_PCM_384_0KHZ ||
-            mode_idx == BD34301_PCM_705_6KHZ ||
-            mode_idx == BD34301_PCM_768_0KHZ)
-    {
-      firFilter2 = 0x80;
-    }
-  }
-  else
-  {
-    if(mode_idx == BD34301_PCM_32_0KHZ ||
-       mode_idx == BD34301_PCM_44_1KHZ ||
-       mode_idx == BD34301_PCM_48_0KHZ )
-    {
-      firFilter2 = 0x80;
-    }
-    else if(mode_idx == BD34301_PCM_88_2KHZ ||
-            mode_idx == BD34301_PCM_96_0KHZ)
-    {
-      firFilter2 = 0x01;
-    }
-    else if(mode_idx ==  BD34301_PCM_176_4KHZ ||
-            mode_idx == BD34301_PCM_192_KHZ)
-    {
-      firFilter2 = 0x02;
-    }
-    else if(mode_idx == BD34301_PCM_352_8KHZ ||
-            mode_idx == BD34301_PCM_384_0KHZ ||
-            mode_idx == BD34301_PCM_705_6KHZ ||
-            mode_idx == BD34301_PCM_768_0KHZ)
-    {
-      firFilter2 = 0x80;
-    }
-  }
-
-  BD34301_RegWrite(0x31, firFilter2);
+  BD34301_RegWrite(0x31, mode->FirFilter2);
   BD34301_RegWrite(0x33, mode->DeEmph1);
   BD34301_RegWrite(0x33, mode->DeEmph1);
   BD34301_RegWrite(0x34, mode->DeEmph1);
   BD34301_RegWrite(0x40, mode->DeltaSigma);
   BD34301_RegWrite(0x60, mode->Settings5);
   BD34301_RegWrite(0x61, mode->Settings6);
+
+  BD34301_PrintMode(mode);
+}
+
+void BD34301_SetRollOff(enum BD34301_RollOff roll_off)
+{
+  uint8_t firFilter2 = 0;
+  for(int mode_idx = BD34301_PCM_32_0KHZ; mode_idx <=BD34301_PCM_768_0KHZ; mode_idx++)
+  {
+    if(roll_off == BD34301_ROLL_OFF_SLOW)
+    {
+      if(mode_idx == BD34301_PCM_32_0KHZ ||
+         mode_idx == BD34301_PCM_44_1KHZ ||
+         mode_idx == BD34301_PCM_48_0KHZ )
+      {
+        firFilter2 = 0x83;
+      }
+      else if(mode_idx == BD34301_PCM_88_2KHZ ||
+              mode_idx == BD34301_PCM_96_0KHZ)
+      {
+        firFilter2 = 0x04;
+      }
+      else if(mode_idx ==  BD34301_PCM_176_4KHZ ||
+              mode_idx == BD34301_PCM_192_KHZ)
+      {
+        firFilter2 = 0x05;
+      }
+      else if(mode_idx == BD34301_PCM_352_8KHZ ||
+              mode_idx == BD34301_PCM_384_0KHZ ||
+              mode_idx == BD34301_PCM_705_6KHZ ||
+              mode_idx == BD34301_PCM_768_0KHZ)
+      {
+        firFilter2 = 0x80;
+      }
+    }
+    else
+    {
+      if(mode_idx == BD34301_PCM_32_0KHZ ||
+         mode_idx == BD34301_PCM_44_1KHZ ||
+         mode_idx == BD34301_PCM_48_0KHZ )
+      {
+        firFilter2 = 0x80;
+      }
+      else if(mode_idx == BD34301_PCM_88_2KHZ ||
+              mode_idx == BD34301_PCM_96_0KHZ)
+      {
+        firFilter2 = 0x01;
+      }
+      else if(mode_idx ==  BD34301_PCM_176_4KHZ ||
+              mode_idx == BD34301_PCM_192_KHZ)
+      {
+        firFilter2 = 0x02;
+      }
+      else if(mode_idx == BD34301_PCM_352_8KHZ ||
+              mode_idx == BD34301_PCM_384_0KHZ ||
+              mode_idx == BD34301_PCM_705_6KHZ ||
+              mode_idx == BD34301_PCM_768_0KHZ)
+      {
+        firFilter2 = 0x80;
+      }
+    }
+
+    BD34301_ModeList[mode_idx].FirFilter2 = firFilter2;
+  }
 }
 
 
-void BD34301_PrintMode(char *buffer, BD34301_Mode_Params_t *mode)
+void BD34301_PrintMode(BD34301_Mode_Params_t *mode)
 {
-  sprintf(buffer, "0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X\n",
+  printf("0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X\r\n",
       mode->Clock1,
       mode->Clock2,
       mode->AudioIf1,
