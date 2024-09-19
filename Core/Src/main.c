@@ -29,7 +29,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "ir_samsung.h"
+#include "ir_nec_rx.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -271,7 +271,7 @@ int main(void)
   Com_Init(&huart1, &hdma_usart1_rx);
 
   /*--- Infrared Receiver ---*/
-  IR_SAM_Init(&htim4, TIM_CHANNEL_4);
+  IR_NEC_Init(&htim4, TIM_CHANNEL_4);
 
 
   /* USER CODE END 2 */

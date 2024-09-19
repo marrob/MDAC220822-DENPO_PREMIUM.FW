@@ -1,22 +1,24 @@
 /*
- * ir_samsung.c
+ * ir_nec_rx.c
  *
- *  Created on: april 14, 2024
+ *  Created on: Dec 29, 2023
  *      Author: marrob
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "ir_samsung.h"
+#include "ir_nec_rx.h"
 
 /* Private define ------------------------------------------------------------*/
-#define MESSAGE_BITS        32
+
+#define DEBUG_CAPTURE_LEN 35
+#define MESSAGE_BITS   32
 
 /*
  * Az Capture Timebase is: 100us
- * if LEADING_PERIOD_WIDTH_100US is 90 then period with is 9000us
+ * if LEADING_PERIOD_WIDTH_100US is 135 then period with is 13500us
  */
-#define LEADING_PERIOD_WIDTH_100US  90 //-> 9ms
-#define HIGH_PERIOD_WIDHT_MIN_100US 20 //-> 2ms
+#define LEADING_PERIOD_WIDTH_100US 135
+#define HIGH_PERIOD_WIDHT_MIN_100US 20
 
 
 /* Private macro -------------------------------------------------------------*/
@@ -24,19 +26,17 @@
 static TIM_HandleTypeDef *_htim;
 static uint32_t _channel;
 
+/*** For Diag ***/
+static uint32_t _errorCnt;
+static uint32_t _messageFrameCnt;
+
 uint32_t _capture_buffer[MESSAGE_BITS];
 uint8_t _decoded_buffer[MESSAGE_BITS / 8];
-uint32_t _decoded_cnt = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private user code ---------------------------------------------------------*/
-__weak void IR_SAM_Parser(uint32_t code)
-{
 
-}
-
-
-void IR_SAM_Init(TIM_HandleTypeDef *htim, uint32_t channel)
+void IR_NEC_Init(TIM_HandleTypeDef *htim, uint32_t channel)
 {
   _htim = htim;
   _channel = channel;
@@ -67,12 +67,12 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     if(message_frame_started)
     {
       _capture_buffer[bit_pos] = period_width;
-      bit_pos++;
+      bit_pos ++;
+
       if(bit_pos > MESSAGE_BITS - 1)
       {
         bit_pos = 0;
         message_frame_started = 0;
-
         for (uint8_t bit = 0; bit < MESSAGE_BITS; bit++)
         {
            if (_capture_buffer[bit] > HIGH_PERIOD_WIDHT_MIN_100US)
@@ -81,18 +81,38 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
              _decoded_buffer[bit / 8] &= ~(1 << (bit % 8));
         }
 
-        _decoded_cnt ++;
+        uint8_t address = _decoded_buffer[0];
+        uint8_t invers_address =  _decoded_buffer[1];
+        if(address != (uint8_t)~invers_address)
+        {
+          _errorCnt++;
+          return;
+        }
 
-        uint32_t code = 0;
-        code = _decoded_buffer[3];
-        code |= _decoded_buffer[2] << 8;
-        code |= _decoded_buffer[1] << 16;
-        code |= _decoded_buffer[0] << 24;
-        IR_SAM_Parser(code);
+        uint8_t command = _decoded_buffer[2];
+        uint8_t invers_command =  _decoded_buffer[3];
+        if(command != (uint8_t)~invers_command)
+        {
+          _errorCnt ++;
+          return;
+        }
+
+        /*** decode completed ***/
+        _messageFrameCnt ++;
+        IR_NEC_Parser(address, command);
       }
     }
   }
 }
 
+__weak void IR_NEC_Parser (uint8_t address, uint8_t command)
+{
+
+}
+
+uint32_t IR_NEC_GetErrorCnt(void)
+{
+  return _errorCnt;
+}
 
 /************************ (C) COPYRIGHT KonvolucioBt ***********END OF FILE****/
