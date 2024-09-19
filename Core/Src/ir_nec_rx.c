@@ -7,7 +7,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "ir_nec_rx.h"
-
+#include <stdio.h>
 /* Private define ------------------------------------------------------------*/
 
 #define DEBUG_CAPTURE_LEN 35
@@ -81,13 +81,23 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
              _decoded_buffer[bit / 8] &= ~(1 << (bit % 8));
         }
 
+
         uint8_t address = _decoded_buffer[0];
+
+        /*
         uint8_t invers_address =  _decoded_buffer[1];
+        */
+
+        //AIR DOG Remote Power On: 0x02 0xBD 0x45 0xBA
+        //printf("%02X %02X %02X %02X\r\n", _decoded_buffer[0], _decoded_buffer[1], _decoded_buffer[2], _decoded_buffer[3]);
+
+        /*
         if(address != (uint8_t)~invers_address)
         {
           _errorCnt++;
           return;
         }
+        */
 
         uint8_t command = _decoded_buffer[2];
         uint8_t invers_command =  _decoded_buffer[3];
@@ -105,11 +115,12 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
   }
 }
 
+/*
 __weak void IR_NEC_Parser (uint8_t address, uint8_t command)
 {
 
 }
-
+*/
 uint32_t IR_NEC_GetErrorCnt(void)
 {
   return _errorCnt;

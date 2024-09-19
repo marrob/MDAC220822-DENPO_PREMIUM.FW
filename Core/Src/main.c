@@ -1426,12 +1426,12 @@ void DeviceMuteOff(void)
 /* IR REMOTE -----------------------------------------------------------------*/
 int ir_not_exec = 0;
 int ir_exec =0;
-void IR_SAM_Parser(uint32_t code)
+void IR_NEC_Parser (uint8_t address, uint8_t command)
 {
   static uint32_t lastrun;
   if(HAL_GetTick() - lastrun > 1000)
   {
-    Device.RemoteCommand = code;
+    Device.RemoteCommand = command;
     lastrun  = HAL_GetTick();
     ir_exec++;
   }
@@ -1439,7 +1439,7 @@ void IR_SAM_Parser(uint32_t code)
   {
     ir_not_exec++;
   }
-  Device.RemoteLastCommand = code; //debaug only
+  Device.RemoteLastCommand = command; //debaug only
   //printf("IR REMOTE CODE:0x%08lX\r\n", code); //debug only
 }
 
@@ -1448,6 +1448,7 @@ void RemoteTask(void)
   switch(Device.RemoteCommand)
   {
     /*--- Power On/Off ---*/
+    case IR_POWER_CHINA:
     case IR_POWER:
     {
       if(DeviceIsOn())
@@ -1458,6 +1459,7 @@ void RemoteTask(void)
     }
 
     /*--- Route ---*/
+    case IR_CH_UP_CHINA:
     case IR_CH_UP:
     {
       if(!Device.IsOn)
@@ -1471,6 +1473,7 @@ void RemoteTask(void)
     }
 
     /*--- Mute ---*/
+    case IR_MUTE_CHINA:
     case IR_MUTE:
     {
       if(!Device.IsOn)
@@ -1485,7 +1488,8 @@ void RemoteTask(void)
     }
 
     /*--- Roll Off Sharp ---*/
-    case IR_VOLUME_UP:
+    case IR_LOVE_CHINA:
+    case IR_LOVE:
     {
       if(!Device.IsOn)
         break;
@@ -1496,58 +1500,36 @@ void RemoteTask(void)
       BD34301_SoftwareResetOn();
       Device.Diag.DacReConfgiurationCnt++;
 
-      Device.DacRollOff = BD34301_ROLL_OFF_SHARP;
+      if(Device.DacRollOff == BD34301_ROLL_OFF_SHARP)
+        Device.DacRollOff = BD34301_ROLL_OFF_SLOW;
+      else
+        Device.DacRollOff = BD34301_ROLL_OFF_SHARP;
+
       BD34301_SetRollOff(Device.DacRollOff);
       BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
       DebugDisplayUpdate();
       Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
 
-      for(uint8_t i = 0; i < 3; i++)
+      if(Device.DacRollOff == BD34301_ROLL_OFF_SHARP)
       {
-        UsrLeds_Off(USR_LED_MUTE);
-        DelayMs(100);
-        UsrLeds_On(USR_LED_MUTE);
-        DelayMs(100);
+        for(uint8_t i = 0; i < 3; i++)
+        {
+          UsrLeds_Off(USR_LED_MUTE);
+          DelayMs(100);
+          UsrLeds_On(USR_LED_MUTE);
+          DelayMs(100);
+        }
       }
 
-      BD34301_SoftwareResetOff();
-      BD34301_DigitalPowerOn();
-      BD34301_RamClear();
-      DeviceMuteOff();
-      BD34301_MuteOff();
-
-      if(UserIsMute())
-        UsrLeds_On(USR_LED_MUTE);
-      else
-        UsrLeds_Off(USR_LED_MUTE);
-
-      break;
-    }
-
-
-    /*--- Roll Off Slow ---*/
-    case IR_VOLUME_DOWN:
-    {
-      if(!Device.IsOn)
-        break;
-
-      DeviceMuteOn();
-      BD34301_MuteOn();
-      BD34301_DigitalPowerOff();
-      BD34301_SoftwareResetOn();
-      Device.Diag.DacReConfgiurationCnt++;
-      Device.DacRollOff = BD34301_ROLL_OFF_SLOW;
-      BD34301_SetRollOff(Device.DacRollOff);
-      BD34301_ModeSwitching(&BD34301_ModeList[Device.DacMode]);
-      DebugDisplayUpdate();
-      Eeprom_WriteU32(EEPROM_ADDR_DAC_ROLLOFF, Device.DacRollOff);
-
-      for(uint8_t i = 0; i < 2; i++)
+      if(Device.DacRollOff == BD34301_ROLL_OFF_SLOW)
       {
-        UsrLeds_Off(USR_LED_MUTE);
-        DelayMs(100);
-        UsrLeds_On(USR_LED_MUTE);
-        DelayMs(100);
+        for(uint8_t i = 0; i < 2; i++)
+        {
+          UsrLeds_Off(USR_LED_MUTE);
+          DelayMs(100);
+          UsrLeds_On(USR_LED_MUTE);
+          DelayMs(100);
+        }
       }
 
       BD34301_SoftwareResetOff();

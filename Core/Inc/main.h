@@ -207,7 +207,7 @@ typedef struct _AppTypeDef
 
 #define DEVICE_NAME             "MDAC220822"
 #define DEVICE_NAME_SIZE        sizeof(DEVICE_NAME)
-#define DEVICE_FW               "240607_1200"
+#define DEVICE_FW               "240919_2019"
 #define DEVICE_FW_SIZE          sizeof(DEVICDSD_PCME_FW)
 #define DEVICE_PCB              "00"
 #define DEVICE_PCB_SIZE         sizeof(DEVICE_PCB)

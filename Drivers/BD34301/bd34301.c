@@ -169,7 +169,7 @@ void BD34301_ModeSwitching(BD34301_Mode_Params_t *mode)
   BD34301_RegWrite(0x60, mode->Settings5);
   BD34301_RegWrite(0x61, mode->Settings6);
 
-  BD34301_PrintMode(mode);
+  //BD34301_PrintMode(mode);
 }
 
 void BD34301_SetRollOff(enum BD34301_RollOff roll_off)
