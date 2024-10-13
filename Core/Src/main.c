@@ -1275,7 +1275,7 @@ void DisplaySleepTask(void)
   {
     if(HAL_GetTick() - Device.WakeStartTimestamp > DEVICE_GO_SLEEP_SEC )
     {
-      DeviceSleep();
+     // DeviceSleep();
     }
   }
 }
